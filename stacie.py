@@ -11,23 +11,30 @@ from matplotlib.widgets import PolygonSelector
 from matplotlib.patches import Polygon
 import json
 import time as t
+import platform
 
 if any('SPYDER' in name for name in environ):
-    matplotlib.use('Qt5Agg')
+    if platform.system() == 'Windows':
+        matplotlib.use('Qt5Agg')
+    elif platform.system() == 'Darwin':
+        matplotlib.use('MacOSX')
+
 else:
     pass
 
 plt.ion()
 
-
-class poly:  # class to make each polygon shape
+# If running in the terminal setting useblit=True in line 37 will dramatically increase the interactivity speed
+# of STACIE. However, in doing so once a previously drawn polygon's shape is adjusted all subsequent polygons
+# will temporarily disappear until either a new polygon is drawn (hiting "enter") or the figure is closed and reopened
+class Poly:  # class to make each polygon shape
 
     def __init__(self, ax, fig):  # initialising
         self.canvas = ax.figure.canvas
         self.ax = ax
         self.fig = fig
         props = dict(color='k', linestyle='--', linewidth=1.5, alpha=0.5)
-        self.polygon = PolygonSelector(ax, self.onSelect, useblit=False, lineprops=props)
+        self.polygon = PolygonSelector(ax, self.on_select, useblit=False, lineprops=props)
         self.vertices = []
         self.shapes = []
         self.name = None
@@ -35,18 +42,18 @@ class poly:  # class to make each polygon shape
         self.start = None
 
     # function that deals with the vertices of each polygon when selected
-    def onSelect(self, verts):
+    def on_select(self, verts):
         self.vertices = verts
         self.end = float(mdates.num2date(max(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
 
-    def newName(self):
+    def new_name(self):
         n = input('\n Feature Label: ')
         self.name = n
 
-    def newPoly(self, event):
+    def new_poly(self, event):
         if event.key == 'enter':
-            a = poly(self.ax, self.onSelect)
-            a.newName()
+            a = Poly(self.ax, self.on_select)
+            a.new_name()
             self.shapes.append(a)
             plt.show()
 
@@ -66,9 +73,9 @@ class poly:  # class to make each polygon shape
 
 
 # All of this is dealing with the data and plotting the spectrum
-def doy2004_to_yyyyddd(doy2004):  # Function to change doy format to yyyyddd
+def doy_to_yyyyddd(doy, origin):  # Function to change doy format to yyyyddd
 
-    aa = np.arange(61, dtype=float)+2004  # array of years starting from 2004
+    aa = np.arange(61, dtype=float)+origin  # array of years starting from 2004
     deb = np.zeros([61], dtype=float)  # zeros
     for i in range(1, len(deb)):  # categorising start point for each year
         if i % 4 == 1:
@@ -76,10 +83,10 @@ def doy2004_to_yyyyddd(doy2004):  # Function to change doy format to yyyyddd
         else:
             deb[i:] = deb[i:]+365.
 
-    yyyyddd = np.zeros(len(doy2004), dtype=float)
+    yyyyddd = np.zeros(len(doy), dtype=float)
 
-    for i in range(0, len(doy2004)):
-        j = doy2004[i]-deb
+    for i in range(0, len(doy)):
+        j = doy[i]-deb
         yyyyddd[i] = (aa[j >= 1][-1])*1000.+j[j >= 1][-1]
 
     return(yyyyddd)
@@ -96,24 +103,24 @@ def doy_to_datetime(time_doy):
 
 
 # A function that either writes or updates the json file
-def writeJson(storage, dataUnits, dataObserver, update=False):
+def write_json(storage, data_units, data_observer, update=False):
     if update:
         for thing in range(len(storage)):
             with open('polygonData.json', 'r') as js_file:
                 times, freqs = mdates.num2date(np.array(storage[thing].vertices)[:, 0]), np.array(storage[thing].vertices)[:, 1]
                 name = storage[thing].name
                 coords = [[float(t.mktime(times[i].timetuple())), freqs[i]] for i in range(len(times))]
-                theUpdate = json.load(js_file)
-                count = int(theUpdate['features'][-1]['id'])+1
+                the_update = json.load(js_file)
+                count = int(the_update['features'][-1]['id'])+1
                 js_file.close()
-                theUpdate['features'].append({"type": "Feature", "id": count, "geometry": {"type": "Polygon", "coordinates": coords}, "properties": {"feature_type": name}})
+                the_update['features'].append({"type": "Feature", "id": count, "geometry": {"type": "Polygon", "coordinates": coords}, "properties": {"feature_type": name}})
 
-                with open('polygonData.json', 'w') as theFile:
-                    json.dump(theUpdate, theFile)
-                    theFile.close()
+                with open('polygonData.json', 'w') as the_file:
+                    json.dump(the_update, the_file)
+                    the_file.close()
     else:
         with open('polygonData.json', 'w') as js_file:
-            TFCat = {"type": "FeatureCollection", "features": [], "crs": {"name": "Time-Frequency", "properties": {"time_coords": {"id": "unix", "name": "Timestamp (Unix Time)", "unit": "s", "time_origin": "1970-01-01T00:00:00.000Z", "time_scale": "TT"}, "spectral_coords": {"name": "Frequency", "unit": dataUnits}, "ref_position": {"id": dataObserver}}}}
+            TFCat = {"type": "FeatureCollection", "features": [], "crs": {"name": "Time-Frequency", "properties": {"time_coords": {"id": "unix", "name": "Timestamp (Unix Time)", "unit": "s", "time_origin": "1970-01-01T00:00:00.000Z", "time_scale": "TT"}, "spectral_coords": {"name": "Frequency", "unit": data_units}, "ref_position": {"id": data_observer}}}}
             count = 0
             for thing in range(len(storage)):
                 times, freqs = mdates.num2date(np.array(storage[thing].vertices)[:, 0]), np.array(storage[thing].vertices)[:, 1]
@@ -126,7 +133,7 @@ def writeJson(storage, dataUnits, dataObserver, update=False):
 
 
 # A function that either writes or updates the txt file
-def writeTxt(storage, update=False):
+def write_txt(storage, update=False):
     if update:
         with open('selected_polygons.txt', 'a') as file:
             for ply in range(len(storage)):
@@ -144,52 +151,62 @@ def writeTxt(storage, update=False):
 
 
 # writing and categorising polygon vertices to a .txt and .json file
-def writeFile(storage, dataUnits, dataObserver):
+def write_file(storage, data_units, data_observer):
     if not path.exists('selected_polygons.txt'):  # check if the files exist
-        writeTxt(storage)
-        writeJson(storage, dataUnits, dataObserver)
+        write_txt(storage)
+        write_json(storage, data_units, data_observer)
 
     else:  # if files are in directory, open them and add to them
-        writeTxt(storage, update=True)
-        writeJson(storage, dataUnits, dataObserver, update=True)
+        write_txt(storage, update=True)
+        write_json(storage, data_units, data_observer, update=True)
 
 
 # Opening Json file and extracting previously drawn polygons
-def openAndDraw(startDay, endDay):
-    dateTime = doy_to_datetime([startDay, endDay])
-    dataArray = []
-    unix_start, unix_end = t.mktime(dateTime[0].timetuple()), t.mktime(dateTime[1].timetuple())
+def open_and_draw(startDay, endDay):
+    date_time = doy_to_datetime([startDay, endDay])
+    data_array = []
+    unix_start, unix_end = t.mktime(date_time[0].timetuple()), t.mktime(date_time[1].timetuple())
     if path.exists('polygonData.json'):
         with open('polygonData.json', 'r') as datFile:
             data = json.load(datFile)
             for i in data['features']:
                 time = np.array(i['geometry']['coordinates'])[:, 0]
                 freq = np.array(i['geometry']['coordinates'])[:, 1]
-                if any(time >= unix_start) and any(time <= unix_end):
+                if any(time >= unix_start) or any(time <= unix_end):
                     coords = []
                     for j in range(len(time)):
-                        unixToDatetime = datetime.datetime.utcfromtimestamp(time[j])
-                        coords.append([mdates.date2num(unixToDatetime), freq[j]])
-                    dataArray.append(np.array(coords))
-    return dataArray
+                        unix_to_datetime = datetime.datetime.utcfromtimestamp(time[j])
+                        coords.append([mdates.date2num(unix_to_datetime), freq[j]])
+                    data_array.append(np.array(coords))
+    return data_array
 
 
 # handling the data
-def plot_spdyn_cassini_rpws(filename, yyyydddb=2004181, yyyyddde=2004181):
+def extract_data(file_data, yyyydddb, yyyyddde):
     # read the save file and copy variables
+    filename = file_data['name']
+    time_index = file_data['time']
+    freq_index = file_data['freq']
+    flux_index = file_data['flux']
     file = readsav(filename)
-    time_t04 = file.t.copy()
+    time_t04 = file[time_index].copy()
+    no_digits = len(str(time_t04[1]).split('.')[0])
 
     # transform the time table (in 'Day since year 2004') into Day of
     # Year and then datetime table
-    time_doy_tmp = doy2004_to_yyyyddd(time_t04)
-    time_doy = time_doy_tmp[(time_doy_tmp >= yyyydddb) & (time_doy_tmp < yyyyddde+1)]
-    time = doy_to_datetime(time_doy)
+    if no_digits <= 7:
+        if no_digits == 3:  # doy format
+            time_doy_tmp = doy_to_yyyyddd(time_t04, file_data['origin'])
+        elif no_digits == 7:  # yyyyddd format
+            time_doy_tmp = time_t04
+
+        time_doy = time_doy_tmp[(time_doy_tmp >= yyyydddb) & (time_doy_tmp < yyyyddde+1)]
+        time = doy_to_datetime(time_doy)
 
     # copy the flux and frequency variable into temporary variable in
     # order to interpolate them in log scale
-    s = file.s[:, (time_doy_tmp >= yyyydddb) & (time_doy_tmp < yyyyddde+1)].copy()
-    frequency_tmp = file.f.copy()
+    s = file[freq_index][:, (time_doy_tmp >= yyyydddb) & (time_doy_tmp < yyyyddde+1)].copy()
+    frequency_tmp = file[flux_index].copy()
 
     # frequency_tmp is in log scale from f[0]=3.9548001 to f[24] = 349.6542
     # and then in linear scale above so it's needed to transfrom the frequency
@@ -203,16 +220,16 @@ def plot_spdyn_cassini_rpws(filename, yyyydddb=2004181, yyyyddde=2004181):
 
 
 # The setting up and interacting with the plots using polygonSelector
-def plotAndInteract(startDay, endDay, filename, dataUnits, dataObserver, colourIn=None, fwd=None):
+def plot_and_interact(start_day, end_day, file, colour_in=None, fwd=None):
 
-    time, time_doy, freq, flux = plot_spdyn_cassini_rpws(filename, yyyydddb=startDay, yyyyddde=endDay)
+    time, time_doy, freq, flux = extract_data(file, yyyydddb=start_day, yyyyddde=end_day)
 
     figsize = (15, 5)
 
     fontsize = 12
 
-    vmin = flux[flux > 0.].min()
-    vmax = flux.max()
+    vmin = np.quantile(flux[flux > 0.], 0.05)
+    vmax = np.quantile(flux[flux > 0.], 0.95)
     scaleZ = colors.LogNorm(vmin=vmin, vmax=vmax)
 
     # First plot the data as pcolormesh object and save it as a .png
@@ -231,86 +248,96 @@ def plotAndInteract(startDay, endDay, filename, dataUnits, dataObserver, colourI
 
     # Formatting Axes
     ax2.set_xlabel('Time', fontsize=fontsize)
-    ax2.set_ylabel('Frequency (kHz)', fontsize=fontsize)
-    ax2.set_title(f'Cassini/RPWS data - DoY {startDay} to {endDay}', fontsize=fontsize+2)
-    dateFmt = mdates.DateFormatter('%Y-%j\n%H:%M')
-    ax2.xaxis.set_major_formatter(dateFmt)
+    ax2.set_ylabel(f'Frequency ({file["units"]})', fontsize=fontsize)
+    ax2.set_title(f' {file["obs"]} Data - DoY {start_day} to {end_day}', fontsize=fontsize+2)
+    date_fmt = mdates.DateFormatter('%Y-%j\n%H:%M')
+    ax2.xaxis.set_major_formatter(date_fmt)
 
     # Formatting colourbar
-    figure = ax2.figure
+    figure = ax1.figure
     divider = axes_grid1.make_axes_locatable(ax2)
     cax = divider.append_axes("right", size=0.15, pad=0.2)
     cb = figure.colorbar(im1, extend='both', shrink=0.9, cax=cax, ax=ax2)
     cb.set_label(r'Intensity (V$^2$/m$^2$/Hz)', fontsize=fontsize+2)
 
-    if colourIn:
-        for shape in colourIn:
+    if colour_in:
+        for shape in colour_in:
             ax2.add_patch(Polygon(shape, color='k', linestyle='--', linewidth=1.5, alpha=0.5, fill=False))
 
     ax2.imshow(image, aspect='auto', extent=[mt[0], mt[1], min(freq), max(freq)])
+    plt.show()
 
     # Plotting and interacting
     # Begins by basic instruction
 
     print('Begin by inputting a name for the feature. ')
-    ply1 = poly(ax2, fig2)  # Start drawing a polygon
+    ply1 = Poly(ax2, fig2)  # Start drawing a polygon
     ply1.name = input('\n Feature label: ')
 
     print('\n Select the vertices of your polygon with your mouse, complete the shape by clicking on the starting point. \n Edit the shape by drag and dropping any of the vertices on your polygon.')
     print('\n To start a new polygon press enter before providing it with a name. When done, simply press "q" ')
-    fig2.canvas.mpl_connect('key_press_event', ply1.newPoly)
+    fig2.canvas.mpl_connect('key_press_event', ply1.new_poly)
     plt.show(block=True)
 
     try:
         ply1.end = float(mdates.num2date(max(np.array(ply1.vertices)[:, 0])).strftime('%Y%j.%H'))
         ply1.start = float(mdates.num2date(min(np.array(ply1.vertices)[:, 0])).strftime('%Y%j.%H'))
         ply1.shapes.insert(0, ply1)
-        writeFile(ply1.shapes, dataUnits, dataObserver)
+        write_file(ply1.shapes, file['units'], file['obs'])
         print('\n Polygon data saved to file...')
 
     except IndexError:
         print('\n No new polygons to save to file...')
 
 
-fileName = str(input('Input RPWS (.sav) data file name:  '))
-while True:
-    if path.exists(fileName):
-        if fileName.endswith('.sav'):
-            break
-        else:
-            fileName = str(input(f'\n {fileName} is not a valid data file. Try again: '))
-    else:
-        fileName = str(input('\n File does not exist, please try again: '))
+if __name__ == '__main__':
+    while True:
+        try:
+            file_name, start_year = input('\n Input RPWS (.sav) data file name and year of origin (e.g. filename.sav, 2006):  ').split(', ')
 
-observer, units = input('Please enter the observer and units of measurement (e.g. Juno, kHz): ').split(', ')
-startDay = int(input('\n Please enter your start day (yyyydoy): '))
-endDay = int(input('\n Please enter your end day (yyyydoy): '))
-savedPolys = openAndDraw(startDay, endDay)
-plotAndInteract(startDay, endDay, fileName, units, observer, colourIn=savedPolys)
+            if path.exists(file_name):
+                if file_name.endswith('.sav'):
+                    time_var, freq_var, flux_var = input('Please enter the time, frequency and flux variable names in your file (e.g. t, fq, fx): ').split(', ')
+                    break
+                else:
+                    print(f'\n {fileName} is not a valid data file. Try again...')
+
+            else:
+                print('\n File does not exist, please try again...')
+
+        except ValueError:
+            print('\n You did not enter the file name and year of origin correctly. Please try again')
+
+    observer, units = input('\n Please enter the observer and units of measurement (e.g. Juno, kHz): ').split(', ')
+    file_data = {'name': file_name, 'origin': int(start_year), 'obs': observer, 'units': units, 'time': time_var, 'freq': freq_var, 'flux': flux_var}
+start_day = int(input('\n Please enter your start day (yyyydoy): '))
+end_day = int(input('\n Please enter your end day (yyyydoy): '))
+saved_polys = open_and_draw(start_day, end_day)
+plot_and_interact(start_day, end_day, file_data, colour_in=saved_polys)
 direction = None
 
 # At the end of each loop the user is asked if they want to continue,
 # if so then they move to the next time range
 ans = input('\n Do you wish to continue cataloging (y/n)? ')
 while ans == 'y':
-    direction = input('\n Do you wish to scroll to the next or previous time phase (forward/backward)?')
-    timeDiff = int(endDay-startDay)
+    direction = input('\n Do you wish to scroll to the next or previous time phase (forward/backward)? ')
+    time_diff = int(end_day-start_day)
 
     if direction == 'forward':
-        startDay += timeDiff
-        endDay += timeDiff
+        start_day += time_diff
+        end_day += time_diff
 
     elif direction == 'backward':
-        startDay -= timeDiff
-        endDay -= timeDiff
+        start_day -= time_diff
+        end_day -= time_diff
 
-    if int(str(endDay)[-3:]) >= 350:
-        startDay = int(input('\n Please enter your start day (yyyydoy): '))
-        endDay = int(input('\n Please enter your end day (yyyydoy): '))
-        savedPolys = openAndDraw(startDay, endDay)
-        plotAndInteract(startDay, endDay, fileName, units, observer, colourIn=savedPolys)
+    if int(str(end_day)[-3:]) >= 350:
+        start_day = int(input('\n Please enter your start day (yyyydoy): '))
+        end_day = int(input('\n Please enter your end day (yyyydoy): '))
+        saved_polys = open_and_draw(start_day, end_day)
+        plot_and_interact(start_day, end_day, file_data, colour_in=saved_polys)
         ans = input('\n Do you wish to continue cataloging (y/n)? ')
     else:
-        savedPolys = openAndDraw(startDay, endDay)
-        plotAndInteract(startDay, endDay, fileName, units, observer, colourIn=savedPolys)
+        saved_polys = open_and_draw(start_day, end_day)
+        plot_and_interact(start_day, end_day, file_data, colour_in=saved_polys)
         ans = input('\n Do you wish to continue cataloging (y/n)? ')
