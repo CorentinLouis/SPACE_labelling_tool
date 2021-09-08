@@ -1,4 +1,8 @@
-# STACIE_Project
+# STACIE_Project v1.0.0
+
+[![DOI](https://zenodo.org/badge/394242915.svg)](https://zenodo.org/badge/latestdoi/394242915)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 ## Title: SpecTrogram Analysis and CatalogIng Environment (STACIE)
  
