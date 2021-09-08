@@ -253,8 +253,8 @@ def extract_data(file_data, yyyydddb, yyyyddde):
 
     # copy the flux and frequency variable into temporary variable in
     # order to interpolate them in log scale
-    s = file[freq_index][:, (time_doy_tmp >= yyyydddb) & (time_doy_tmp < yyyyddde+1)].copy()
-    frequency_tmp = file[flux_index].copy()
+    s = file[flux_index][:, (time_doy_tmp >= yyyydddb) & (time_doy_tmp < yyyyddde+1)].copy()
+    frequency_tmp = file[freq_index].copy()
 
     # frequency_tmp is in log scale from f[0]=3.9548001 to f[24] = 349.6542
     # and then in linear scale above so it's needed to transfrom the frequency
