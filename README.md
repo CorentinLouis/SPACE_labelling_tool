@@ -1,14 +1,14 @@
-# STACIE_Project v1.0.0
+# SPACE Labelling Tool v1.1.0
 
 [![DOI](https://zenodo.org/badge/394242915.svg)](https://zenodo.org/badge/latestdoi/394242915)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-## Title: SpecTrogram Analysis and CatalogIng Environment (STACIE)
+## Title: SPectrogram Analysis and Cataloguing Environment (SPACE) 
  
-STACIE is an interactive python tool designed to label features of interest on a dynamic spectrum and to save the time-frequency coordinates to both ".txt" and ".json" files. The program uses Matplotlib's Polygon Selector widget to allow a user to select and edit an undefined amount of vertices on top of the dynamic spectrum before closing the shape (polygon). Multiple polygons may be drawn on any spectrum, of which the feature name along with the maximum and minimum time and frequency points are saved into a ".txt" file, while the coordinates for each polygon vertex are saved into a ".json" file as per the TFCat format along with other data such as the feature id, observer name, and data units. These files are saved into the user's local directory with the names "selected_polygons.txt" and "polygonData.json". The program can be run on the terminal or in a Spyder environment, in which case it specifies the need for the PyQt5 backend, this is implemented in the code itself.
+SPACE is an interactive python tool designed to label features of interest on a dynamic spectrum and to save the time-frequency coordinates to both ".txt" and ".json" files. The program uses Matplotlib's Polygon Selector widget to allow a user to select and edit an undefined amount of vertices on top of the dynamic spectrum before closing the shape (polygon). Multiple polygons may be drawn on any spectrum, of which the feature name along with the maximum and minimum time and frequency points are saved into a ".txt" file, while the coordinates for each polygon vertex are saved into a ".json" file as per the TFCat format along with other data such as the feature id, observer name, and data units. These files are saved into the user's local directory with the names "selected_polygons.txt" and "polygonData.json". The program can be run on the terminal or in a Spyder environment, in which case it specifies the need for the PyQt5 backend, this is implemented in the code itself.
 
-NOTE: When run in the Spyder environment, due to a glitch, the inital spectrogram does not appear before the user is asked to input the name of the first feature. However, in the terminal this is not an issue and the user has the ability to view the spectrogram before begining to label. It is therefore recommended for optimal performance that STACIE is ran in the terminal. If ran in Spyder, it is recomended that the user "blindly" inputs a feature name for the first polygon, and once completed drawing, renames the feature they have labelled using the instructions below. 
+NOTE: When run in the Spyder environment, due to a glitch, the inital spectrogram does not appear before the user is asked to input the name of the first feature. However, in the terminal this is not an issue and the user has the ability to view the spectrogram before begining to label. It is therefore recommended for optimal performance that SPACE is ran in the terminal. If ran in Spyder, it is recomended that the user "blindly" inputs a feature name for the first polygon, and once completed drawing, renames the feature they have labelled using the instructions below. 
  
 ## Usage instructions:
  
