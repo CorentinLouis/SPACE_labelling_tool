@@ -12,6 +12,7 @@ from matplotlib.patches import Polygon
 import json
 import time as t
 import platform
+from shapely.geometry import LinearRing
 
 if any('SPYDER' in name for name in environ):
     if platform.system() == 'Windows':
@@ -157,7 +158,10 @@ def write_json(storage, dataUnits, dataObserver, update=False):
             with open('polygonData.json', 'r') as js_file:
                 times, freqs = mdates.num2date(np.array(storage[thing].vertices)[:, 0]), np.array(storage[thing].vertices)[:, 1]
                 name = storage[thing].name
-                coords = [[float(t.mktime(times[i].timetuple())), freqs[i]] for i in range(len(times))]
+                coords = [[[float(t.mktime(times[i].timetuple())), freqs[i]] for i in range(len(times))]]
+                # polygon coordinates need to be in counter-clockwise order (TFCat specification)
+                if (LinearRing(coords[0])).is_ccw == False:
+                    coords = [coords[0][::-1]]
                 the_update = json.load(js_file)
                 count = int(the_update['features'][-1]['id'])+1
                 js_file.close()
@@ -173,7 +177,10 @@ def write_json(storage, dataUnits, dataObserver, update=False):
             for thing in range(len(storage)):
                 times, freqs = mdates.num2date(np.array(storage[thing].vertices)[:, 0]), np.array(storage[thing].vertices)[:, 1]
                 name = storage[thing].name
-                coords = [[float(t.mktime(times[i].timetuple())), freqs[i]] for i in range(len(times))]
+                coords = [[[float(t.mktime(times[i].timetuple())), freqs[i]] for i in range(len(times))]]
+                # polygon coordinates need to be in counter-clockwise order (TFCat specification)
+                if (LinearRing(coords[0])).is_ccw == False:
+                    coords = [coords[0][::-1]]
                 TFCat['features'].append({"type": "Feature", "id": count, "geometry": {"type": "Polygon", "coordinates": coords}, "properties": {"feature_type": name}})
                 count += 1
 
@@ -218,8 +225,8 @@ def open_and_draw(start_day, end_day):
         with open('polygonData.json', 'r') as dat_file:
             data = json.load(dat_file)
             for i in data['features']:
-                time = np.array(i['geometry']['coordinates'])[:, 0]
-                freq = np.array(i['geometry']['coordinates'])[:, 1]
+                time = np.array(i['geometry']['coordinates'])[0][:, 0]
+                freq = np.array(i['geometry']['coordinates'])[0][:, 1]
                 if any(time >= unix_start) or any(time <= unix_end):
                     coords = []
                     for j in range(len(time)):
