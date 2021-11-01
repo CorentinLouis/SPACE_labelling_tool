@@ -37,5 +37,6 @@ NOTE: When run in the Spyder environment, due to a glitch, the inital spectrogra
  matplotlib - 3.4.2
  scipy - 1.6.3
  numpy - 1.20.2
+ shapely - 1.8.0
  
 
