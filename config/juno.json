@@ -1,0 +1,18 @@
+{
+  "observer": "Juno",
+  "names": {
+    "time": "?",
+    "frequency": "?",
+    "flux_density": "?",
+    "power": "?",
+    "degree_of_polarisation": "?"
+  },
+  "units": {
+    "time": "Julian day",
+    "frequency": "?",
+    "flux_density": "?",
+    "power": "?",
+    "degree_of_polarisation": "%"
+  },
+  "years": [2016, 2025]
+}
