@@ -1,15 +1,15 @@
-# Satellite Configurations
+# Spacecraft Configurations
 
-This tool is designed to read and process output files from a range of satellite radio detectors, 
+This tool is designed to read and process output files from a range of spacecraft radio detectors, 
 some of which may have already undergone post-processing. By looking at the data files, it will attempt to identify
-which satellite they have come from using the column names.
+which spacecraft they have come from using the column names.
 
-Satellite configurations are declared in the [config directory](../config/). 
+Spacecraft configurations are declared in the [config directory](../config/). 
 They are JSON-format files with following structure:
 
 ```json
 {
-  "observer": "Satellite name, e.g. 'Cassini', 'Juno'",
+  "observer": "Spacecraft name, e.g. 'Cassini', 'Juno'",
   "names": {
     "time": "Column name, e.g. 't'",
     "frequency": "Column name, e.g. 'f'",
@@ -20,13 +20,13 @@ They are JSON-format files with following structure:
   "units": {
     "time": "Time units, e.g. 'Days'",
     "frequency": "Frequency units, e.g. 'kHz'",
-    "flux_density": "Flux density units, e.g. 'm^{-2}s^{-1}'",
+    "flux_density": "Flux density units, e.g. 'Wm^{-2}Hz^{-1}'",
     "power": "Power units, e.g. 'W/sr'",
-    "degree_of_polarisation": "Degree of polarisation units, e.g. '%'"
+    "degree_of_polarisation": "Degree of polarisation units (probably just blank e.g. '')"
   },
   "years": [
-    "Integer, year the satellite began taking data, e.g. 2004", 
-    "Integer, year the satellite stopped recording data, e.g. 2017"
+    "Integer, year the spacecraft began taking data, e.g. 2004", 
+    "Integer, year the spacecraft stopped recording data, e.g. 2017"
   ]
 }
 ```

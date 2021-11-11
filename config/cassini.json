@@ -10,9 +10,9 @@
   "units": {
     "time": "Day",
     "frequency": "kHz",
-    "flux_density": "?",
+    "flux_density": "Wm^{-2}Hz^{-1}",
     "power": "W/sr",
-    "degree_of_polarisation": "%"
+    "degree_of_polarisation": ""
   },
   "years": [2004, 2017]
 }

@@ -2,34 +2,30 @@
 """
 SPACE Labelling Tool
 
-Utility to allow for identification of radio features from satellite observations via a GUI.
+Utility to allow for identification of radio features from spacecraft observations via a GUI.
 
-usage: space_label.py [-h] [-s SATELLITE] [-y YEAR_ORIGIN] FILE DATE DATE
-
-Read and process satellite radio data files in IDL .sav format.
+usage: space_label.py [-h] [-s SPACECRAFT] [-y YEAR_ORIGIN] FILE DATE DATE
 
 positional arguments:
   FILE            The name of the IDL .sav file to analyse
   DATE            The window of days to plot, in YYYYDDD format, e.g. '2003334
-                  2003365' for December 2003.The data will be scrolled through
+                  2003365' for December 2003. The data will be scrolled through
                   in blocks of this window's width.
 
 optional arguments:
   -h, --help      show this help message and exit
-  -s SATELLITE    The name of the satellite. Auto-detected from the input file
-                  columns, but required if multiple satellites describe the
-                  same input file. Valid options are: cassini, juno
+  -s SPACECRAFT   The name of the spacecraft. Auto-detected from the input file
+                  columns, but required if multiple spacecraft describe the
+                  same input file. Valid options are: cassini, juno.
   -y YEAR_ORIGIN  The year of origin, from which times in the dataset are the
                   data set was taken. Auto-detected from the first number in
                   the input file name, but can be provided if there is none,
                   or if this is incorrect.
 
-It will attempt to identify which satellite the data file format corresponds to, and read the file intelligently.
-If it can't fit one of them, it will prompt the user to create a new satellite configuration file.
+The code will attempt to identify which spacecraft the data file format corresponds to, and read the file intelligently.
+If it can't fit one of them, it will prompt the user to create a new spacecraft configuration file.
+In the case of a file matching multiple spacecraft formats, the user is prompted to select one.
 
-In the case of a file matching multiple satellite formats, the user is prompted to select one.
-
-Dates are validated against the spacecraft operating window and the data in the file.
 """
 import argparse
 import json
@@ -44,11 +40,11 @@ from space_develop import open_and_draw, plot_and_interact
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Read and process satellite radio data files in IDL .sav format."
+        description="Read and process spacecraft radio data files in IDL .sav format."
     )
     parser.add_argument(
         "file", type=str, nargs=1, metavar="FILE",
-        help="The name of the IDL .sav file to analyse"
+        help="The name of the IDL .sav file to analyse."
     )
     parser.add_argument(
         'date_range', type=int, nargs=2, metavar="DATE",
@@ -57,9 +53,9 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '-s', type=str, nargs=1, dest='config', metavar="SATELLITE",
-        help="The name of the satellite. Auto-detected from the input file columns, "
-             "but required if multiple satellites describe the same input file. Valid options are: {}".format(
+        '-s', type=str, nargs=1, dest='config', metavar="SPACECRAFT",
+        help="The name of the spacecraft. Auto-detected from the input file columns, "
+             "but required if multiple spacecraft describe the same input file. Valid options are: {}.".format(
                 ', '.join([str(config_file.stem) for config_file in (Path(__file__).parent / 'config').iterdir()])
              )
     )
@@ -98,7 +94,7 @@ if __name__ == '__main__':
             config = arguments.config
         else:
             raise FileNotFoundError(
-                f"Satellite '{arguments.config}' is not one of the available configurations.\n"
+                f"Spacecraft '{arguments.config}' is not one of the available configurations.\n"
                 f"Options are: {','.join(configs.keys())}."
             )
 
@@ -145,7 +141,7 @@ if __name__ == '__main__':
 
     if data_start.year < config['years'][0] or data_end.year > config['years'][-1]:
         raise ValueError(
-            f"Year range {data_start.year}-{data_end.year} in '{input_file}' is outside of the satellite "
+            f"Year range {data_start.year}-{data_end.year} in '{input_file}' is outside of the spacecraft "
             f"{config['name']} operating window of {config['years'][0]}-{config['years'][1]}.\n" +
             (
                 f"The year {year_origin} detected from the the file name may be incorrect - "

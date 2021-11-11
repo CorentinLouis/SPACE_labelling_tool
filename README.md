@@ -1,6 +1,6 @@
 # SPACE Labelling Tool
 
-Utility to allow for identification of radio features from satellite observations via a GUI.
+Utility to allow for identification of radio features from spacecraft observations via a GUI.
 
 
 ## Getting Started
@@ -12,41 +12,49 @@ pip install -e SPACE_labelling_tool
 ```
 Installing in editable mode will allow the scripts to read any new or modified versions of the configuration files.
 
-## Usage
+To use the development version of the tool, after installing do:
 ```shell
-space_label.py [-h] [-s SATELLITE] [-y YEAR_ORIGIN] FILE DATE DATE
+cd SPACE_labelling_tool
+git switch develop
 ```
 
-Read and process satellite radio data files in IDL .sav format.
+## Usage
 
-Positional arguments:
-  FILE            The name of the IDL .sav file to analyse
-  DATE            The window of days to plot, in YYYYDDD format, e.g. '2003334
-                  2003365' for December 2003.The data will be scrolled through
-                  in blocks of this window's width.
+```shell
+space_label.py [-h] [-s SPACECRAFT] [-y YEAR_ORIGIN] FILE DATE DATE
+```
 
-Optional arguments:
-  -h, --help      show this help message and exit
-  -s SATELLITE    The name of the satellite. Auto-detected from the input file
-                  columns, but required if multiple satellites describe the
-                  same input file. Valid options are: cassini, juno
-  -y YEAR_ORIGIN  The year of origin, from which times in the dataset are the taken. 
-                  Auto-detected from the first number in the input file name, 
-                  but can be provided if there is none, or if this is incorrect.
+**Positional arguments:**
+* `FILE`: The name of the IDL `.sav` file to analyse
+* `DATE`: The window of days to plot, in YYYYDDD format, e.g. '2003334 2003365' for December 2003.
+  The data will be scrolled through in blocks of this window's width.
 
-It will attempt to identify which satellite the data file format corresponds to, and read the file intelligently.
-If it can't fit one of them, it will prompt the user to create a new satellite configuration file.
+**Optional arguments:**
+* `-h`, `--help`: Shows help documentation.
+* `-s SPACECRAFT`: The name of the spacecraft. Auto-detected from the input file columns, 
+  but required if multiple spacecraft describe the same input file. Valid options are: cassini, juno.
+* `-y YEAR_ORIGIN`: The year of origin, from which times in the dataset are the taken. Auto-detected from the first 
+  number in the input file name, but can be provided if there is none, or if this is incorrect.
 
-In the case of a file matching multiple satellite formats, the user is prompted to select one.
+The code will attempt to identify which spacecraft the data file format corresponds to, and read the file intelligently.
+If it can't fit one of them, it will prompt the user to create a new spacecraft configuration file.
+In the case of a file matching multiple spacecraft formats, the user is prompted to select one.
 
-Dates are validated against the spacecraft operating window and the data in the file.
 
-### Satellite Configurations
+### Usage Examples
 
-Satellite configuration files are stored in the `config/` directory in JSON format. 
-For more info on how to create a new one, see [satellite configurations](docs/satellite_configurations.md).
+Calling the code as:
+```shell
+space_label.py -y 2004 cassini_data.sav 2004001 2004035
+```
+Will load the file `cassini_data.sav`, set the year of origin for the data to 2004, and display the radio observations
+for the time window 1/1/2004 to 4/2/2004.
+
 
 ## Documentation
+
+Spacecraft configuration files are stored in the `config/` directory in JSON format. 
+For more info on how to create a new one, see [spacecraft configurations](docs/spacecraft_configurations.md).
 
 Information on the file formats this program inputs and outputs can be found in the [data dictionary](docs/data_dictionary.md).
 
@@ -86,8 +94,8 @@ and then if a feature is required to be labelled, they can rename the feature us
 
 Once the plot has appeared and the name of the feature is entered the user may interact with the figure and draw polygons ontop of it. 
 This is done using the cursor which will be shadowed by a grey circle on the plot, 
-each time the user clicks on a point a grey circle will be left at that point and act as a vertex for the polygon. S
-ubsequent vertices will be joined together by a similarly grey dashed line, 
+each time the user clicks on a point a grey circle will be left at that point and act as a vertex for the polygon. 
+Subsequent vertices will be joined together by a similarly grey dashed line, 
 to close the polygon the user must return and click on the first vertex. 
 At this point the user may edit the shape of the polygon by drag and dropping any vertex of their choice.
 
@@ -97,7 +105,7 @@ The use of the following keys allows for further interaction :
 * "q" - once this key is hit the figure will close and the polygons drawn will be saved to the files
 * "r" - this allows the user to rename the polygon that has just been or currently is being drawn
 
-Once the user has has finished drawing their polygons they may hit "q" to close the window and end the program or, 
+Once the user has finished drawing their polygons they may hit "q" to close the window and end the program or, 
 if they wish to go to either the next or previous time phase they can do so by hitting the left or right arrow keys. 
 Hitting "left" will create a new environment with data form the previous time range, 
 and similarly when pressing "right" but with the next data in time. Once again, if running on Spyder, 
@@ -116,7 +124,7 @@ The MacOSX backend allows the scrolling feature to work properly and without iss
 Furthermore, as with the main version of SPACE the bug where the plot does not appear until after the user has inputted a feature label (on Windows or Mac) is one to note. 
 Again, this does not happen when run on the terminal. 
 It is believed that is due to the order in which Spyder runs and evaluates the lines of the code compared to the terminal, 
-however no solution has been determiend yet. 
+however no solution has been determined yet. 
 
 ## Python Requirements
 Spyder - 4.1.5 
