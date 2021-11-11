@@ -30,7 +30,7 @@ plt.ion()
 # will temporarily disappear until either a new polygon is drawn (hiting "enter") or the figure is closed and reopened
 class Poly:  # class to make each polygon shape
 
-    def __init__(self, ax, fig, start_day, end_day):  # initialising
+    def __init__(self, ax, fig, start_day, end_day, file_data):  # initialising
         self.canvas = ax.figure.canvas
         self.ax = ax
         self.fig = fig
@@ -43,6 +43,7 @@ class Poly:  # class to make each polygon shape
         self.start = None
         self.start_day = start_day
         self.end_day = end_day
+        self.file_data = file_data
 
     # function that deals with the vertices of each polygon when selected
 
@@ -57,7 +58,7 @@ class Poly:  # class to make each polygon shape
 
     def new_poly(self, event):
         if event.key == 'enter':
-            a = Poly(self.ax, self.on_select, self.start_day, self.end_day)
+            a = Poly(self.ax, self.on_select, self.start_day, self.end_day, self.file_data)
             a.new_name()
             self.shapes.append(a)
             plt.draw()
@@ -68,7 +69,7 @@ class Poly:  # class to make each polygon shape
                 self.end = float(mdates.num2date(max(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
                 self.start = float(mdates.num2date(min(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
                 self.shapes.insert(0, self)
-                write_file(self.shapes, file_data['units'], file_data['obs'])
+                write_file(self.shapes, self.file_data['units'], self.file_data['obs'])
                 print('\n Polygon data saved to file...')
 
             except IndexError:
@@ -327,13 +328,13 @@ def plot_and_interact(start_day, end_day, file, colour_in=None, fwd=None, again=
     if again:
 
         print('Begin by inputting a name for the feature. ')
-        ply1 = Poly(ax2, fig2, start_day, end_day)  # Start drawing a polygon
+        ply1 = Poly(ax2, fig2, start_day, end_day, file)  # Start drawing a polygon
         ply1.name = input('\n Feature label: ')
 
         print('\n Select the vertices of your polygon with your mouse, complete the shape by clicking on the starting point. \n Edit the shape by drag and dropping any of the vertices on your polygon.')
         print('\n To start a new polygon press enter before providing it with a name. When done, simply press "q" ')
     else:
-        ply1 = Poly(ax2, fig2, start_day, end_day)  # Start drawing a polygon
+        ply1 = Poly(ax2, fig2, start_day, end_day, file)  # Start drawing a polygon
         ply1.name = input('\n Feature label: ')
 
     fig2.canvas.mpl_connect('key_press_event', ply1.new_poly)

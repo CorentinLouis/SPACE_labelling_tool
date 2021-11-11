@@ -1,0 +1,7 @@
+venv/
+cenv/
+.idea/
+*.pyc
+*.ipynb-checkpoint
+*.sav
+*.egg-info
