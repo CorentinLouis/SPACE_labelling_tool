@@ -21,20 +21,19 @@ git switch develop
 ## Usage
 
 ```shell
-space_label.py [-h] [-s SPACECRAFT] [-y YEAR_ORIGIN] FILE DATE DATE
+space_label.py [-h] [-s SPACECRAFT] FILE DATE DATE
 ```
 
 **Positional arguments:**
-* `FILE`: The name of the IDL `.sav` file to analyse
-* `DATE`: The window of days to plot, in YYYYDDD format, e.g. '2003334 2003365' for December 2003.
+* `FILE`: The name of the IDL `.sav` file to analyse. 
+  It must be in the format outlined in the [data_dictionary](docs/data_dictionary.md); three (or more) columns!
+* `DATE`: The window of days to plot, in ISO YYYY-MM-DD format, e.g. '2003-12-1 2003-12-31' for December 2003.
   The data will be scrolled through in blocks of this window's width.
 
 **Optional arguments:**
 * `-h`, `--help`: Shows help documentation.
 * `-s SPACECRAFT`: The name of the spacecraft. Auto-detected from the input file columns, 
   but required if multiple spacecraft describe the same input file. Valid options are: cassini, juno.
-* `-y YEAR_ORIGIN`: The year of origin, from which times in the dataset are the taken. Auto-detected from the first 
-  number in the input file name, but can be provided if there is none, or if this is incorrect.
 
 The code will attempt to identify which spacecraft the data file format corresponds to, and read the file intelligently.
 If it can't fit one of them, it will prompt the user to create a new spacecraft configuration file.
@@ -45,9 +44,9 @@ In the case of a file matching multiple spacecraft formats, the user is prompted
 
 Calling the code as:
 ```shell
-space_label.py -y 2004 cassini_data.sav 2004001 2004035
+space_label.py cassini_data.sav 2004001 2004035
 ```
-Will load the file `cassini_data.sav`, set the year of origin for the data to 2004, and display the radio observations
+Will load the file `cassini_data.sav`, and display the radio observations
 for the time window 1/1/2004 to 4/2/2004.
 
 
