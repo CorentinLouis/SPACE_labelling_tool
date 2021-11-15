@@ -182,7 +182,7 @@ def open_and_draw(startDay, endDay):
                 if any(time >= unix_start) or any(time <= unix_end):
                     coords = []
                     for j in range(len(time)):
-                        unix_to_datetime = datetime.datetime.utcfromtimestamp(time[j])
+                        unix_to_datetime = datetime.datetime.fromtimestamp(time[j])
                         coords.append([mdates.date2num(unix_to_datetime), freq[j]])
                     data_array.append(np.array(coords))
     return data_array
