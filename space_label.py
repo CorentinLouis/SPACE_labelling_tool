@@ -25,14 +25,16 @@ In the case of a file matching multiple spacecraft formats, the user is prompted
 """
 import argparse
 import json
+import numpy as np
 import re
 from pathlib import Path
 from scipy.io import readsav
 from typing import Dict, List
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from space_develop import plot_and_interact
-from space_label.io import open_and_draw
+from spacelabel.io import open_and_draw
+from spacelabel.poly import plot_and_interact
+from spacelabel.date import float_to_string, fix_iso_format
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -118,11 +120,19 @@ if __name__ == '__main__':
     except Exception:
         raise ValueError(
             f"Date range {arguments.date_range} is not in ISO date format.\n"
-            f"Please provide the dates in the format YYYY-MM-DD."
+            f"Please provide the dates in the format YYYY-MM-DD e.g. 2005-01-01."
         )
 
     data_start = sav[config['names']['time']][0]
     data_end = sav[config['names']['time']][-1]
+
+    # TEMPORARY FIX
+    data_start = fix_iso_format(data_start)
+    data_end = fix_iso_format(data_end)
+
+    data_start = datetime.fromisoformat(data_start)
+    data_end = datetime.fromisoformat(data_end)
+
     if date_start < data_start or date_end > data_end:
         raise ValueError(
             f"Date range {date_start}-{date_end} is outside of the data file range {data_start}-{data_end}.\n"

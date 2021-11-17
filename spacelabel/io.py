@@ -8,6 +8,8 @@ from matplotlib import dates as mdates
 from scipy.io import readsav
 from shapely.geometry import LinearRing
 
+from spacelabel.date import fix_iso_format
+
 
 # A function that either writes or updates the txt file
 def write_txt(storage, update=False):
@@ -54,10 +56,18 @@ def extract_data(file_data, date_start, date_end):
     filename = file_data['name']
     freq_index = file_data['freq']
     flux_index = file_data['flux']
-    file = readsav(filename)
+    file = readsav(filename, python_dict=True)
 
     # Extract the time from the data
     time = file[file_data['time']]
+
+    # TEMPORARY FIX
+    time = np.vectorize(fix_iso_format)(time)
+
+    time = np.array(time, dtype=np.datetime64)
+
+    # Now, filter to only the window
+    time_window = time[(time >= date_start) & (time <= date_end)]
 
     # copy the flux and frequency variable into temporary variable in
     # order to interpolate them in log scale
@@ -68,11 +78,12 @@ def extract_data(file_data, date_start, date_end):
     # and then in linear scale above so it's needed to transform the frequency
     # table in a full log table and interpolate the flux table (s --> flux
     frequency = 10**(np.arange(np.log10(frequency_tmp[0]), np.log10(frequency_tmp[-1]), (np.log10(max(frequency_tmp))-np.log10(min(frequency_tmp)))/399, dtype=float))
-    flux = np.zeros((frequency.size, len(time)), dtype=float)
-    for i in range(len(time)):
+    flux = np.zeros((frequency.size, len(time_window)), dtype=float)
+
+    for i in range(len(time_window)):
         flux[:, i] = np.interp(frequency, frequency_tmp, s[:, i])
 
-    return time, frequency, flux
+    return time_window,  frequency, flux
 
 
 # A function that either writes or updates the json file

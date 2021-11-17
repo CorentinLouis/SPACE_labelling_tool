@@ -8,6 +8,7 @@ setup(
     maintainer='Corentin Louis',
     maintainer_email='corentin.louis@dias.ie',
     data_files=[('config', ['config/*.json'])],
+    packages=['spacelabel'],
     scripts=['space_label.py'],
     install_requires=[
         'scipy', 'numpy', 'matplotlib', 'shapely'
