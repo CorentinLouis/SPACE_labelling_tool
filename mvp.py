@@ -110,8 +110,8 @@ if __name__ == '__main__':
             year_origin: int = int(year_origin[0])
 
     # We validate the data year - is it in the range the satellite operated within?
-    data_start = datetime(year=year_origin, month=1, day=1) + timedelta(days=sav[config['names']['time']][0])
-    data_end = datetime(year=year_origin, month=1, day=1) + timedelta(days=sav[config['names']['time']][-1])
+    data_start: datetime = datetime(year=year_origin, month=1, day=1) + timedelta(days=sav[config['names']['time']][0])
+    data_end: datetime = datetime(year=year_origin, month=1, day=1) + timedelta(days=sav[config['names']['time']][-1])
 
     if data_start.year < config['years'][0] or data_end.year > config['years'][-1]:
         raise ValueError(
@@ -126,8 +126,8 @@ if __name__ == '__main__':
 
     # ==================== DATE RANGE ====================
     # Now we have the year of origin, we can validate the date range provided
-    date_start = datetime.strptime(str(arguments.date_range[0]), "%Y%j")
-    date_end = datetime.strptime(str(arguments.date_range[1]), "%Y%j")
+    date_start: datetime = datetime.strptime(str(arguments.date_range[0]), "%Y%j")
+    date_end: datetime = datetime.strptime(str(arguments.date_range[1]), "%Y%j")
 
     if date_start < data_start or date_end > data_end:
         raise ValueError(
@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
     # ==================== CALL SPACE_DEVELOP ====================
     # Set up the MVP and go!
-    dataset = DataSetCassini(file_path=input_file, config=config, sav=sav)
-    view = View()
-    presenter = Presenter(dataset, view)
+    dataset: DataSetCassini = DataSetCassini(file_path=input_file, config=config, sav=sav)
+    view: View = View()
+    presenter: Presenter = Presenter(dataset, view)
     presenter.request_data_time_range(time_start=date_start, time_end=date_end)

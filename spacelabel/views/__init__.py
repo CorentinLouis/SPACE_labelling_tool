@@ -1,28 +1,32 @@
 import numpy
+
 from easygui import enterbox
+from matplotlib.backend_bases import MouseEvent
 from matplotlib.colors import LogNorm
 from matplotlib.patches import Polygon
 from matplotlib.pyplot import Figure, Axes, figure
 from matplotlib.widgets import PolygonSelector, Button
 from mpl_toolkits import axes_grid1
-from numpy import ndarray  # Imported seperately for ease of Typing
-from typing import Dict, List
+from numpy import ndarray, datetime64  # Imported separately for ease of Typing
+from typing import Dict, List, Tuple, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from spacelabel.presenters import Presenter
 
-FIGURE_SIZE = (15, 5)
-FONT_SIZE = 12
+FIGURE_SIZE: Tuple[float, float] = (15, 5)
+FONT_SIZE: float = 12
 
 
 class View:
     """
-
+    Class that handles the presentation of data in a single matplotlib figure and user interactions with it.
     """
     _fig: Figure = None
     _axes: Dict[str, Axes] = None
     _ax_cbar: Axes = None
     _ax_data: Axes = None
     _feature_name: str = None
-    _presenter = None
+    _presenter: 'Presenter' = None
     _selector: PolygonSelector = None
     _button_next: Button = None
     _button_prev: Button = None
@@ -53,10 +57,11 @@ class View:
         # Shouldn't be necessary
         # self._fig.canvas.mpl_connect('key_press_event', self.event_keypress)
 
-    def register_presenter(self, presenter):
+    def register_presenter(self, presenter: 'Presenter'):
+        """Links the dataset to the presenter that manages it."""
         self._presenter = presenter
 
-    def event_selected(self, vertexes: ndarray):
+    def event_selected(self, vertexes: List[Tuple[datetime64, float]]):
         """
         Triggered when the user finishes drawing a polygon on the plot,
         and requests a name for the finished polygon (defaulting to the last one used)
@@ -70,10 +75,10 @@ class View:
             self._axes['D'], onselect=self.event_selected
         )
 
-    def draw_features(self, features: List[ndarray]):
+    def draw_features(self, features: List[List[Tuple[datetime64, float]]]):
         """
         Plot the provided features on the map.
-        :param features:
+        :param features: The list of features, each of which is a list of tuples of time-frequency points.
         """
         for feature in features:
             self._axes['D'].add_patch(
@@ -86,13 +91,17 @@ class View:
     ):
         """
         Renders a batch of data on the plot. This is for the single-data version.
+        :param time:
+        :param freq:
+        :param data:
+        :param units:
         """
 
-        meas = data[list(data.keys())[0]]
+        meas: ndarray = data[list(data.keys())[0]]
 
-        vmin = numpy.quantile(meas[meas > 0.], 0.05)
-        vmax = numpy.quantile(meas[meas > 0.], 0.95)
-        norm = LogNorm(vmin=vmin, vmax=vmax)
+        vmin: float = numpy.quantile(meas[meas > 0.], 0.05)
+        vmax: float = numpy.quantile(meas[meas > 0.], 0.95)
+        norm: LogNorm = LogNorm(vmin=vmin, vmax=vmax)
 
         image = self._axes['D'].pcolormesh(time, freq, meas, cmap='Spectral_r', norm=norm, shading='auto')
 
@@ -115,24 +124,18 @@ class View:
             self._axes['D'], onselect=self.event_selected
         )
 
-    def event_button_next(self, event):
-        """
-
-        """
+    def event_button_next(self, event: MouseEvent):
+        """Triggered when the user clicks the 'Next' button."""
         del self._selector
         self._axes['D'].clear()
         self._presenter.request_data_next()
 
-    def event_button_prev(self, event):
-        """
-
-        """
+    def event_button_prev(self, event: MouseEvent):
+        """Triggered when the user clicks the 'Previous' button."""
         del self._selector
         self._axes['D'].clear()
         self._presenter.request_data_prev()
 
-    def event_button_save(self, event):
-        """
-
-        """
+    def event_button_save(self, event: MouseEvent):
+        """Triggered when the user clicks the 'Save' button."""
         self._presenter.request_save()

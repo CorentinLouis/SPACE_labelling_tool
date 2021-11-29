@@ -9,14 +9,16 @@ import json
 import numpy
 from abc import ABC, abstractmethod
 from datetime import datetime
-from numpy import ndarray  # Explicit import to make Typing easier
-
-from typing import Tuple, Dict, Optional, List, Union
+from numpy import datetime64, ndarray  # Explicit import to make Typing easier
 from pathlib import Path
 from scipy.io import readsav
+# from tfcat.validate import validate_file
+from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING
 
 from spacelabel.models.feature import Feature
 from spacelabel.config import find_config_for_sav
+if TYPE_CHECKING:
+    from spacelabel.presenters import Presenter
 
 
 class DataSet(ABC):
@@ -31,9 +33,10 @@ class DataSet(ABC):
     _data: Dict[str, ndarray] = {}  # Private dictionary containing the data for the variables
     _units: Dict[str, str] = {}
     _features: List[Feature] = []
-    _presenter = None
+    _presenter: 'Presenter' = None
 
-    def register_presenter(self, presenter):
+    def register_presenter(self, presenter: 'Presenter'):
+        """Links the dataset to the presenter that manages it."""
         self._presenter = presenter
 
     def get_data_for_time_range(
@@ -50,29 +53,30 @@ class DataSet(ABC):
         :return: A dictionary containing the keys 'time', 'freq', 'flux' and possibly 'power' and 'polarisation'
         """
         if measurements and not isinstance(measurements, list):
-            measurements = [measurements]
+            # If the user hasn't specified a list of measurements, convert to a single-entry list for ease of use
+            measurements: List = [measurements]
 
-        time_mask = self._time[(time_start <= self._time) & (self._time <= time_end)]
+        time_mask: ndarray = self._time[(time_start <= self._time) & (self._time <= time_end)]
         return self._time[time_mask], self._freq, \
             {key: self._data[key][time_mask] for key in self._data if key in measurements or measurements is None}
 
-    def add_feature(self, name: str, vertexes: ndarray):
+    def add_feature(self, name: str, vertexes: List[Tuple[datetime64, float]]):
         """
-
-        :param name: The name of the feature.
+        Adds a new feature (either from file or a polyselector on the plot).
+        :param name: The name of the feature
         :param vertexes: A 2-d matplotlib array of coordinates as [time, freq]
         :return:
         """
         self._features.append(
-            Feature(name=name, time=vertexes[:, 0], freq=vertexes[:, 1], id=len(self._features))
+            Feature(name=name, vertexes=vertexes, id=len(self._features))
         )
 
     def get_features_for_time_range(self, time_start: datetime, time_end: datetime) -> List[Feature]:
         """
-
+        Returns the Features that are contained within the specified time range.
         :param time_start: The start of the time range (inclusive)
         :param time_end: The end of the time range (inclusive)
-        :return:
+        :return: A list of the features (in feature format)
         """
         return [
             feature for feature in self._features if feature.is_in_time_range(time_start, time_end)
@@ -129,14 +133,15 @@ class DataSet(ABC):
         Loads the features for this datafile from a JSON file.
         This *should* be called in the constructor. Possibly move this to the superclass constructor?
         """
-        if self._file_path_base.with_suffix('.json').exists():
-            with open(self._file_path_base.with_suffix('.json'), 'r') as file_json:
+        path_tfcat: Path = self._file_path_base.with_suffix('.json')
+        if path_tfcat.exists():  # and validate_file(path_tfcat):
+            with open(path_tfcat, 'r') as file_json:
                 tfcat: Dict = json.load(file_json)
 
             for feature in tfcat["features"]:
                 self.add_feature(
                     name=feature['properties']['feature_type'],
-                    vertexes=numpy.array(feature['geometry']['coordinates']),
+                    vertexes=feature['geometry']['coordinates'],
                 )
 
 
@@ -145,7 +150,8 @@ class DataSetCassini(DataSet):
     Contains the data from a Cassini observation datafile.
     """
     def __init__(
-            self, file_path: Path, config: Dict,
+            self, file_path: Path,
+            config: Optional[Dict] = None,
             frequency_resolution: Optional[int] = 400,
             sav: Optional[dict] = None
     ):
@@ -161,7 +167,10 @@ class DataSetCassini(DataSet):
         self._observer = config['observer']
 
         if not sav:
-            sav = readsav(str(file_path), python_dict=True)
+            sav: dict = readsav(str(file_path), python_dict=True)
+
+        if not config:
+            config: dict = find_config_for_sav(sav)
 
         # We want to rename everything in the data file to 'standard' names to make the code easier to read
         for name_new, name_original in config['names'].items():
@@ -182,7 +191,7 @@ class DataSetCassini(DataSet):
 
         # The frequency is spaced logarithmically from f[0]=3.9548001 to f[24] = 349.6542 and then linearly above that
         # So we need to transform the frequency table in a full log table and interpolate the flux table
-        freq_original = sav.pop('frequency')
+        freq_original: ndarray = sav.pop('frequency')
         self._freq = 10**(
             numpy.arange(
                 start=numpy.log10(freq_original[0]),
@@ -194,7 +203,7 @@ class DataSetCassini(DataSet):
 
         # Now save the data (e.g. flux, power, degree of polarisation)
         for key in sav:
-            variable = sav.pop(key)
+            variable: ndarray = sav.pop(key)
             self._data[key] = numpy.zeros(
                 (len(self._freq), len(self._time)), dtype=float
             )
