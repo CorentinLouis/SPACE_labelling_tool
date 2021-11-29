@@ -1,17 +1,25 @@
+"""
+Data sets from satellites.
+
+Should probably have the internal data representation moved from numpy arrays to astropy timeseries.
+This would also simplify units.
+"""
+
 import json
 import numpy
 from abc import ABC, abstractmethod
 from datetime import datetime
-from numpy import ndarray
-from typing import Tuple, Dict, Optional, List
+from numpy import ndarray  # Explicit import to make Typing easier
+
+from typing import Tuple, Dict, Optional, List, Union
 from pathlib import Path
 from scipy.io import readsav
 
 from spacelabel.models.feature import Feature
-from spacelabel.config import find_config_for_file
+from spacelabel.config import find_config_for_sav
 
 
-class Datafile(ABC):
+class DataSet(ABC):
     """
     Contains the data from a spacecraft. Implemented differently for different data file formats.
     This is the *abstract* base class that does not implement loading from file.
@@ -23,9 +31,14 @@ class Datafile(ABC):
     _data: Dict[str, ndarray] = {}  # Private dictionary containing the data for the variables
     _units: Dict[str, str] = {}
     _features: List[Feature] = []
+    _presenter = None
+
+    def register_presenter(self, presenter):
+        self._presenter = presenter
 
     def get_data_for_time_range(
-            self, time_start: datetime, time_end: datetime
+            self, time_start: datetime, time_end: datetime,
+            measurements: Union[None, str, List[str]] = None
     ) -> Tuple[ndarray, ndarray, Dict[str, ndarray]]:
         """
         Returns a dictionary containing the data for the specified time range.
@@ -33,10 +46,15 @@ class Datafile(ABC):
 
         :param time_start: The start of the time range (inclusive)
         :param time_end: The end of the time range (inclusive)
+        :param measurements: The types of parameter to get, all if None
         :return: A dictionary containing the keys 'time', 'freq', 'flux' and possibly 'power' and 'polarisation'
         """
+        if measurements and not isinstance(measurements, list):
+            measurements = [measurements]
+
         time_mask = self._time[(time_start <= self._time) & (self._time <= time_end)]
-        return self._time[time_mask], self._freq, {key: self._data[key][time_mask] for key in self._data.keys()}
+        return self._time[time_mask], self._freq, \
+            {key: self._data[key][time_mask] for key in self._data if key in measurements or measurements is None}
 
     def add_feature(self, name: str, vertexes: ndarray):
         """
@@ -67,7 +85,7 @@ class Datafile(ABC):
         """
         Returns the start and end dates in the time window.
         """
-        return (self._time[0], self._time[-1])
+        return self._time[0], self._time[-1]
 
     def write_features_to_text(self):
         """
@@ -122,59 +140,66 @@ class Datafile(ABC):
                 )
 
 
-class DatafileCassini(Datafile):
+class DataSetCassini(DataSet):
     """
     Contains the data from a Cassini observation datafile.
     """
-    def __init__(self, file_path: Path, config_name: Optional[str] = None):
+    def __init__(
+            self, file_path: Path, config: Dict,
+            frequency_resolution: Optional[int] = 400,
+            sav: Optional[dict] = None
+    ):
         """
         Reads a Cassini datafile.
 
         :param file_path: The path to the file
-        :param config_name: The name of the config file to use, if any
+        :param config: The configuration file to use, if any
+        :param frequency_resolution: How many frequency bins to rescale to. Default 400
+        :param sav: If the sav file has already been read, pass it through to save time
         """
         self._file_path_base = file_path.with_suffix('')
-        sav = readsav(str(file_path), python_dict=True)
-
-        config = find_config_for_file(Path(__file__) / "../../config/cassini/")
         self._observer = config['observer']
-        self._units = config['units']
 
-        # We want to rename everything in the data file to 'standard' names to make the code
-        # a lot easier to read!
+        if not sav:
+            sav = readsav(str(file_path), python_dict=True)
+
+        # We want to rename everything in the data file to 'standard' names to make the code easier to read
         for name_new, name_original in config['names'].items():
             try:
                 sav[name_new] = sav.pop(name_original)
             except KeyError:
                 pass
 
+        # Copy across the units to our object, then strip out the units for data types that aren't present in this file
+        self._units = config['units']
+        for key in self._units:
+            if key not in self._data:
+                self._units.pop(key)
+
         # We use pop to remove the axes values (time and frequency) from the file,
         # so we can just iterate over what's left to rescale as it's all just data variables.
         self._time = numpy.array(sav.pop('time'), dtype=numpy.datetime64)  # Parse the time column.
-        freq_original = sav.pop('frequency')
 
         # The frequency is spaced logarithmically from f[0]=3.9548001 to f[24] = 349.6542 and then linearly above that
         # So we need to transform the frequency table in a full log table and interpolate the flux table
+        freq_original = sav.pop('frequency')
         self._freq = 10**(
             numpy.arange(
                 start=numpy.log10(freq_original[0]),
                 stop=numpy.log10(freq_original[-1]),
-                step=(numpy.log10(max(freq_original))-numpy.log10(min(freq_original)))/399.0,
+                step=(numpy.log10(max(freq_original))-numpy.log10(min(freq_original)))/(frequency_resolution-1),
                 dtype=float
             )
         )
 
-        self._data['flux'] = None
-
-        # These will need rebinning like the flux one
-        if sav.has("degree_of_polarisation"):
-            self._data['degree_of_polarisation'] = sav['degree_of_polarisation']
-        if sav.has("power"):
-            self._data['power'] = sav['power']
-
-        # Strip out the units for data types that aren't present in this file
-        for key in self._units:
-            if key not in self._data:
-                self._units.pop(key)
+        # Now save the data (e.g. flux, power, degree of polarisation)
+        for key in sav:
+            variable = sav.pop(key)
+            self._data[key] = numpy.zeros(
+                (len(self._freq), len(self._time)), dtype=float
+            )
+            # This absolutely can be done more efficiently
+            for i in range(len(self._time)):
+                self._data[key][:, i] = numpy.interp(self._freq, freq_original, variable[:, i])
 
         self.load_features_from_json()

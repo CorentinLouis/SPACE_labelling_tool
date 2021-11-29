@@ -1,5 +1,5 @@
 from datetime import datetime
-from numpy import ndarray
+from numpy import ndarray, datetime64
 from time import mktime
 
 
@@ -47,9 +47,9 @@ class Feature:
 
     def is_in_time_range(self, time_start: datetime, time_end: datetime) -> bool:
         """
-        Whether or not the feature is within this time range.
+        Whether or not the feature is within this time range. Converts dates to numpy format internally.
         :param time_start: The start of the time range (inclusive)
         :param time_end: The end of the time range (inclusive)
         :return: Whether or not the time range contains this feature
         """
-        return (self._time[0] <= time_start) & (time_end <= self._time[-1])
+        return (self._time[0] <= datetime64(time_start)) & (datetime64(time_end) <= self._time[-1])
