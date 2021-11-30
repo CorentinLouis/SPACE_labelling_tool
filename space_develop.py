@@ -15,7 +15,6 @@ import platform
 from shapely.geometry import LinearRing
 
 from datetime import timedelta
-from spacelabel.date import fix_iso_format
 
 
 
@@ -254,7 +253,6 @@ def extract_data(file_data, time_view_start, time_view_end):
     file = readsav(filename)
 
     time = file[time_index].copy()
-    time = np.vectorize(fix_iso_format)(time)
     time = np.array(time, dtype=np.datetime64)
     time_view = time[(time >= time_view_start) & (time <= time_view_end)]
 

@@ -35,7 +35,6 @@ from scipy.io import readsav
 from typing import Dict, List
 from datetime import datetime, timedelta
 
-from spacelabel.date import fix_iso_format
 from space_develop import open_and_draw, plot_and_interact
 
 
@@ -128,10 +127,6 @@ if __name__ == '__main__':
 
     data_start = sav[config['names']['time']][0]
     data_end = sav[config['names']['time']][-1]
-
-    # TEMPORARY FIX
-    data_start = fix_iso_format(data_start)
-    data_end = fix_iso_format(data_end)
 
     data_start = datetime.fromisoformat(data_start)
     data_end = datetime.fromisoformat(data_end)
