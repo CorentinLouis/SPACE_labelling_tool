@@ -14,6 +14,10 @@ import time as t
 import platform
 from shapely.geometry import LinearRing
 
+from datetime import timedelta
+
+
+
 if any('SPYDER' in name for name in environ):
     if platform.system() == 'Windows':
         matplotlib.use('Qt5Agg')
@@ -30,7 +34,7 @@ plt.ion()
 # will temporarily disappear until either a new polygon is drawn (hiting "enter") or the figure is closed and reopened
 class Poly:  # class to make each polygon shape
 
-    def __init__(self, ax, fig, start_day, end_day, file_data):  # initialising
+    def __init__(self, ax, fig, time_view_start, time_view_end, file_data):  # initialising
         self.canvas = ax.figure.canvas
         self.ax = ax
         self.fig = fig
@@ -39,18 +43,18 @@ class Poly:  # class to make each polygon shape
         self.vertices = []
         self.shapes = []
         self.name = None
-        self.end = None
-        self.start = None
-        self.start_day = start_day
-        self.end_day = end_day
+        self.time_poly_end = None
+        self.time_poly_start = None
+        self.time_view_start = time_view_start
+        self.time_view_end = time_view_end
         self.file_data = file_data
 
     # function that deals with the vertices of each polygon when selected
 
     def on_select(self, verts):
         self.vertices = verts
-        self.end = float(mdates.num2date(max(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
-        self.start = float(mdates.num2date(min(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
+        self.time_poly_end = float(mdates.num2date(max(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
+        self.time_poly_start = float(mdates.num2date(min(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
 
     def new_name(self):
         n = input('\n Feature Label: ')
@@ -58,7 +62,7 @@ class Poly:  # class to make each polygon shape
 
     def new_poly(self, event):
         if event.key == 'enter':
-            a = Poly(self.ax, self.on_select, self.start_day, self.end_day, self.file_data)
+            a = Poly(self.ax, self.on_select, self.time_view_start, self.time_view_end, self.file_data)
             a.new_name()
             self.shapes.append(a)
             plt.draw()
@@ -66,8 +70,8 @@ class Poly:  # class to make each polygon shape
         if event.key == 'q':
             plt.close(self.fig)
             try:
-                self.end = float(mdates.num2date(max(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
-                self.start = float(mdates.num2date(min(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
+                self.time_poly_end = mdates.num2date(max(np.array(self.vertices)[:, 0]))
+                self.time_poly_start = mdates.num2date(min(np.array(self.vertices)[:, 0]))
                 self.shapes.insert(0, self)
                 write_file(self.shapes, self.file_data['units'], self.file_data['obs'])
                 print('\n Polygon data saved to file...')
@@ -85,38 +89,40 @@ class Poly:  # class to make each polygon shape
 
         if event.key == 'right' or event.key == 'left':
             try:
-                self.end = float(mdates.num2date(max(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
-                self.start = float(mdates.num2date(min(np.array(self.vertices)[:, 0])).strftime('%Y%j.%H'))
+                self.time_poly_end = mdates.num2date(max(np.array(self.vertices)[:, 0]))
+                self.time_poly_start = mdates.num2date(min(np.array(self.vertices)[:, 0]))
                 self.shapes.insert(0, self)
-                write_file(self.shapes, file_data['units'], file_data['obs'])
+                write_file(self.shapes, self.file_data['units'], self.file_data['obs'])
                 print('\n Polygon data saved to file...')
 
             except IndexError:
                 print('\n No new polygons to save to file...')
 
             direction = None
-            time_diff = int(self.end_day-self.start_day)
-            strt = None
-            end = None
+            time_diff = self.time_view_end - self.time_view_start
+            time_view_new_start = None
+            time_view_new_end = None
             if event.key == 'right':
                 direction = 'forward'
-                strt = self.start_day+time_diff
-                end = self.end_day+time_diff
+                time_view_new_start = self.time_view_start + time_diff
+                time_view_new_end = self.time_view_end + time_diff
             elif event.key == 'left':
                 direction = 'backward'
-                strt = self.start_day-time_diff
-                end = self.end_day-time_diff
+                time_view_new_start = self.time_view_start - time_diff
+                time_view_new_end = self.time_view_end - time_diff
 
             plt.close(self.fig)
 
-            if float(str(end)[-3:]) >= 350 or float(str(strt)[-3:]) <= 15:
-                strt = int(input('\n Please enter your start day (yyyydoy): '))
-                end = int(input('\n Please enter your end day (yyyydoy): '))
-                saved_polys = open_and_draw(strt, end)
-                plot_and_interact(strt, end, file_data, colour_in=saved_polys, fwd=direction)
-            else:
-                saved_polys = open_and_draw(strt, end)
-                plot_and_interact(strt, end, file_data, colour_in=saved_polys, fwd=direction)
+            # if float(str(time_view_new_end)[-3:]) >= 350 or float(str(time_view_new_start)[-3:]) <= 15:
+            #     time_view_new_start = int(input('\n Please enter your start day (yyyydoy): '))
+            #     time_view_new_end = int(input('\n Please enter your time_view_new_end day (yyyydoy): '))
+            #     saved_polys = open_and_draw(time_view_new_start, time_view_new_end)
+            #     plot_and_interact(time_view_new_start, time_view_new_end, file_data, colour_in=saved_polys, fwd=direction)
+            # else:
+            saved_polys = open_and_draw(time_view_new_start, time_view_new_end)
+            plot_and_interact(
+                time_view_new_start, time_view_new_end, self.file_data, colour_in=saved_polys, fwd=direction
+            )
 
         else:
             return None
@@ -139,7 +145,7 @@ def doy_to_yyyyddd(doy, origin):  # Function to change doy format to yyyyddd
         j = doy[i]-deb
         yyyyddd[i] = (aa[j >= 1][-1])*1000.+j[j >= 1][-1]
 
-    return(yyyyddd)
+    return yyyyddd
 
 
 # convert from doy format to datetime objects
@@ -149,7 +155,7 @@ def doy_to_datetime(time_doy):
     time_seconds = [int((((time_doy[itime]-int(time_doy[itime]))*24-time_hours[itime])*60-time_minutes[itime])*60) for itime in range(len(time_doy))]
     time = [datetime.datetime.strptime(f'{int(time_doy[itime])}T{time_hours[itime]:02d}:{time_minutes[itime]:02d}:{time_seconds[itime]:02d}', "%Y%jT%H:%M:%S") for itime in range(len(time_doy))]
 
-    return(time)
+    return time
 
 
 # A function that either writes or updates the json file
@@ -218,9 +224,9 @@ def write_file(storage, dataUnits, dataObserver):
 
 
 # Opening Json file and extracting previously drawn polygons
-def open_and_draw(start_day, end_day):
-    date_time = doy_to_datetime([start_day, end_day])
+def open_and_draw(time_view_start, time_view_end):
     data_array = []
+    date_time = [time_view_start, time_view_end]
     unix_start, unix_end = t.mktime(date_time[0].timetuple()), t.mktime(date_time[1].timetuple())
     if path.exists('polygonData.json'):
         with open('polygonData.json', 'r') as dat_file:
@@ -231,66 +237,60 @@ def open_and_draw(start_day, end_day):
                 if any(time >= unix_start) or any(time <= unix_end):
                     coords = []
                     for j in range(len(time)):
-                        unix_to_datetime = datetime.datetime.utcfromtimestamp(time[j])
+                        unix_to_datetime = datetime.datetime.fromtimestamp(time[j])
                         coords.append([mdates.date2num(unix_to_datetime), freq[j]])
                     data_array.append(np.array(coords))
     return data_array
 
 
 # handling the data
-def extract_data(file_data, yyyydddb, yyyyddde):
+def extract_data(file_data, time_view_start, time_view_end):
     # read the save file and copy variables
     filename = file_data['name']
     time_index = file_data['time']
     freq_index = file_data['freq']
     flux_index = file_data['flux']
     file = readsav(filename)
-    time_t04 = file[time_index].copy()
-    no_digits = len(str(time_t04[1]).split('.')[0])
 
-    # transform the time table (in 'Day since year 2004') into Day of
-    # Year and then datetime table
-    if no_digits <= 7:
-        if no_digits == 3:  # doy format
-            time_doy_tmp = doy_to_yyyyddd(time_t04, file_data['origin'])
-        elif no_digits == 7:  # yyyyddd format
-            time_doy_tmp = time_t04
-
-        time_doy = time_doy_tmp[(time_doy_tmp >= yyyydddb) & (time_doy_tmp < yyyyddde+1)]
-        time = doy_to_datetime(time_doy)
+    time = file[time_index].copy()
+    time = np.array(time, dtype=np.datetime64)
+    time_view = time[(time >= time_view_start) & (time <= time_view_end)]
 
     # copy the flux and frequency variable into temporary variable in
     # order to interpolate them in log scale
-    s = file[flux_index][:, (time_doy_tmp >= yyyydddb) & (time_doy_tmp < yyyyddde+1)].copy()
+    s = file[flux_index][:, (time >= time_view_start) & (time <= time_view_end)].copy()
     frequency_tmp = file[freq_index].copy()
 
     # frequency_tmp is in log scale from f[0]=3.9548001 to f[24] = 349.6542
     # and then in linear scale above so it's needed to transfrom the frequency
     # table in a full log table and einterpolate the flux table (s --> flux
     frequency = 10**(np.arange(np.log10(frequency_tmp[0]), np.log10(frequency_tmp[-1]), (np.log10(max(frequency_tmp))-np.log10(min(frequency_tmp)))/399, dtype=float))
-    flux = np.zeros((frequency.size, len(time)), dtype=float)
-    for i in range(len(time)):
+    flux = np.zeros((frequency.size, len(time_view)), dtype=float)
+
+    for i in range(len(time_view)):
         flux[:, i] = np.interp(frequency, frequency_tmp, s[:, i])
 
-    return time, time_doy, frequency, flux
+    return time_view, frequency, flux
 
 
 # The setting up and interacting with the plots using polygonSelector
-def plot_and_interact(start_day, end_day, file, colour_in=None, fwd=None, again=False):
+def plot_and_interact(time_view_start, time_view_end, file, colour_in=None, fwd=None, again=False):
 
-    time, time_doy, freq, flux = extract_data(file, yyyydddb=start_day, yyyyddde=end_day)
+    time, freq, flux = extract_data(
+        file, time_view_start=time_view_start, time_view_end=time_view_end
+    )
 
     figsize = (15, 5)
 
     fontsize = 12
 
-    vmin = np.quantile(flux[flux>0.], 0.05)
-    vmax = np.quantile(flux[flux>0.], 0.95)
+    vmin = np.quantile(flux[flux > 0.], 0.05)
+    vmax = np.quantile(flux[flux > 0.], 0.95)
     scaleZ = colors.LogNorm(vmin=vmin, vmax=vmax)
 
     # First plot the data as pcolormesh object and save it as a .png
     fig1, ax1 = plt.subplots(figsize=figsize, constrained_layout=True)
-    im1 = ax1.pcolormesh(time_doy, freq, flux, cmap='Spectral_r', norm=scaleZ, shading='auto')
+    im1 = ax1.pcolormesh(time, freq, flux, cmap='Spectral_r', norm=scaleZ, shading='auto')
 
     ax1.set_axis_off()
     plt.savefig('radioSpectra.png', bbox_inches='tight', pad_inches=0)
@@ -298,15 +298,15 @@ def plot_and_interact(start_day, end_day, file, colour_in=None, fwd=None, again=
     # Open the image and load into graph to save memory
     image = plt.imread('radioSpectra.png')
     remove('radioSpectra.png')
-    fig2, ax2 = plt.subplots(figsize=figsize, sharex=True, sharey=True)
+    fig2, ax2 = plt.subplots(figsize=figsize, sharex='all', sharey='all')
     ax2.set_yscale('log')
     mt = mdates.date2num((min(time), max(time)))
 
     # Formatting Axes
     ax2.set_xlabel('Time', fontsize=fontsize)
     ax2.set_ylabel(f'Frequency ({file["units"]})', fontsize=fontsize)
-    ax2.set_title(f'{file["obs"]} Data - DoY {start_day} to {end_day}', fontsize=fontsize+2)
-    dateFmt = mdates.DateFormatter('%Y-%j\n%H:%M')
+    ax2.set_title(f'{file["obs"]} Data - {time_view_start} to {time_view_end}', fontsize=fontsize + 2)
+    dateFmt = mdates.DateFormatter('%Y-%M-%D\n%H:%M')
     ax2.xaxis.set_major_formatter(dateFmt)
 
     # Formatting colourbar
@@ -328,13 +328,13 @@ def plot_and_interact(start_day, end_day, file, colour_in=None, fwd=None, again=
     if again:
 
         print('Begin by inputting a name for the feature. ')
-        ply1 = Poly(ax2, fig2, start_day, end_day, file)  # Start drawing a polygon
+        ply1 = Poly(ax2, fig2, time_view_start, time_view_end, file)  # Start drawing a polygon
         ply1.name = input('\n Feature label: ')
 
         print('\n Select the vertices of your polygon with your mouse, complete the shape by clicking on the starting point. \n Edit the shape by drag and dropping any of the vertices on your polygon.')
         print('\n To start a new polygon press enter before providing it with a name. When done, simply press "q" ')
     else:
-        ply1 = Poly(ax2, fig2, start_day, end_day, file)  # Start drawing a polygon
+        ply1 = Poly(ax2, fig2, time_view_start, time_view_end, file)  # Start drawing a polygon
         ply1.name = input('\n Feature label: ')
 
     fig2.canvas.mpl_connect('key_press_event', ply1.new_poly)
