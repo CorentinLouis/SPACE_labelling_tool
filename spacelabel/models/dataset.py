@@ -181,7 +181,8 @@ class DataSetCassini(DataSet):
 
         # Copy across the units to our object, then strip out the units for data types that aren't present in this file
         self._units = config['units']
-        for key in self._units:
+        keys: List[str] = list(self._units.keys())  # To prevent issues with popping during iteration
+        for key in keys:
             if key not in self._data:
                 self._units.pop(key)
 
