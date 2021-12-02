@@ -12,7 +12,7 @@ from datetime import datetime
 from numpy import datetime64, ndarray  # Explicit import to make Typing easier
 from pathlib import Path
 from scipy.io import readsav
-# from tfcat.validate import validate_file
+from tfcat.validate import validate_file
 from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING
 
 from spacelabel.models.feature import Feature
