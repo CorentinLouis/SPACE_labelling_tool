@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import List, Dict
 
 
-def find_config_for_sav(sav: Dict) -> dict:
+def find_config_for_file(file: Dict) -> dict:
     """
 
-    :param sav:
+    :param file: The dict-style input file
     """
     # First, we scan the configs directory for entries
     configs: Dict[str, dict] = {}
@@ -19,13 +19,13 @@ def find_config_for_sav(sav: Dict) -> dict:
     valid_configs: List[dict] = []
     for config_entry in configs.values():
         # print(config_entry, '\n', set(sav.keys()), '\n', set(config_entry['names'].values()))
-        if not set(sav.keys()) - set(config_entry['names'].values()):
+        if not set(file.keys()) - set(config_entry['names'].values()):
             valid_configs.append(config_entry)
 
     if not valid_configs:
         raise KeyError(
             f"No configuration files describe the columns of input file.'.\n"
-            f"Columns are: {', '.join(sav.keys())}."
+            f"Columns are: {', '.join(file.keys())}."
         )
     elif len(valid_configs) > 1:
         raise KeyError(

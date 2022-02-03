@@ -6,19 +6,24 @@ This would also simplify units.
 """
 
 import json
+import logging
 import numpy
 from abc import ABC, abstractmethod
+from astropy.time import Time
 from datetime import datetime
+from h5py import File
 from numpy import datetime64, ndarray  # Explicit import to make Typing easier
 from pathlib import Path
-from scipy.io import readsav
 from tfcat.validate import validate_file
 from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING
 
 from spacelabel.models.feature import Feature
-from spacelabel.config import find_config_for_sav
+from spacelabel.config import find_config_for_file
 if TYPE_CHECKING:
     from spacelabel.presenters import Presenter
+
+
+log = logging.getLogger(__name__)
 
 
 class DataSet(ABC):
@@ -28,7 +33,7 @@ class DataSet(ABC):
     """
     _file_path_base: Path = None
     _observer: str = None
-    _time: ndarray = None
+    _time: Time = None
     _freq: ndarray = None
     _data: Dict[str, ndarray] = {}  # Private dictionary containing the data for the variables
     _units: Dict[str, str] = {}
@@ -40,7 +45,7 @@ class DataSet(ABC):
         self._presenter = presenter
 
     def get_data_for_time_range(
-            self, time_start: datetime, time_end: datetime,
+            self, time_start: Time, time_end: Time,
             measurements: Union[None, str, List[str]] = None
     ) -> Tuple[ndarray, ndarray, Dict[str, ndarray]]:
         """
@@ -52,13 +57,20 @@ class DataSet(ABC):
         :param measurements: The types of parameter to get, all if None
         :return: A dictionary containing the keys 'time', 'freq', 'flux' and possibly 'power' and 'polarisation'
         """
+        log.info(f"Getting data for time range {time_start} to {time_end}")
+
         if measurements and not isinstance(measurements, list):
             # If the user hasn't specified a list of measurements, convert to a single-entry list for ease of use
             measurements: List = [measurements]
 
-        time_mask: ndarray = self._time[(time_start <= self._time) & (self._time <= time_end)]
-        return self._time[time_mask], self._freq, \
-            {key: self._data[key][time_mask] for key in self._data if key in measurements or measurements is None}
+        time_mask: ndarray = (time_start <= self._time) & (self._time <= time_end)
+        data: Dict[str, ndarray] = {}
+        keys: List[str] = measurements if measurements else self._data.keys()
+
+        for key in keys:
+            data[key] = self._data[key][:, time_mask]
+
+        return self._time[time_mask], self._freq, data
 
     def add_feature(self, name: str, vertexes: List[Tuple[datetime64, float]]):
         """
@@ -71,7 +83,7 @@ class DataSet(ABC):
             Feature(name=name, vertexes=vertexes, id=len(self._features))
         )
 
-    def get_features_for_time_range(self, time_start: datetime, time_end: datetime) -> List[Feature]:
+    def get_features_for_time_range(self, time_start: Time, time_end: Time) -> List[Feature]:
         """
         Returns the Features that are contained within the specified time range.
         :param time_start: The start of the time range (inclusive)
@@ -85,7 +97,7 @@ class DataSet(ABC):
     def get_units(self) -> Dict[str, str]:
         return self._units
 
-    def get_time_range(self) -> Tuple[datetime, datetime]:
+    def get_time_range(self) -> Tuple[Time, Time]:
         """
         Returns the start and end dates in the time window.
         """
@@ -119,7 +131,7 @@ class DataSet(ABC):
                             },
                             "spectral_coords": {
                                 "name": "Frequency",
-                                "unit": self._units['freq']
+                                "unit": self._units['frequency']
                             },
                             "ref_position": {"id": self._observer}
                         }
@@ -134,7 +146,7 @@ class DataSet(ABC):
         This *should* be called in the constructor. Possibly move this to the superclass constructor?
         """
         path_tfcat: Path = self._file_path_base.with_suffix('.json')
-        if path_tfcat.exists():  # and validate_file(path_tfcat):
+        if path_tfcat.exists() and validate_file(path_tfcat):
             with open(path_tfcat, 'r') as file_json:
                 tfcat: Dict = json.load(file_json)
 
@@ -153,46 +165,36 @@ class DataSetCassini(DataSet):
             self, file_path: Path,
             config: Optional[Dict] = None,
             frequency_resolution: Optional[int] = 400,
-            sav: Optional[dict] = None
+            file: Optional[File] = None
     ):
         """
-        Reads a Cassini datafile.
+        Reads a Cassini datafile in HDF5 format.
 
         :param file_path: The path to the file
         :param config: The configuration file to use, if any
         :param frequency_resolution: How many frequency bins to rescale to. Default 400
-        :param sav: If the sav file has already been read, pass it through to save time
+        :param file: If the HDF5 file has already been read, pass it through to save time
         """
         self._file_path_base = file_path.with_suffix('')
         self._observer = config['observer']
 
-        if not sav:
-            sav: dict = readsav(str(file_path), python_dict=True)
+        log.info(f"Loading Cassini dataset '{self._file_path_base}'...")
+
+        if not file:
+            file: File = File(file_path)
 
         if not config:
-            config: dict = find_config_for_sav(sav)
+            config: dict = find_config_for_file(file)
 
-        # We want to rename everything in the data file to 'standard' names to make the code easier to read
-        for name_new, name_original in config['names'].items():
-            try:
-                sav[name_new] = sav.pop(name_original)
-            except KeyError:
-                pass
+        names: Dict[str, str] = config['names']
 
-        # Copy across the units to our object, then strip out the units for data types that aren't present in this file
-        self._units = config['units']
-        keys: List[str] = list(self._units.keys())  # To prevent issues with popping during iteration
-        for key in keys:
-            if key not in self._data:
-                self._units.pop(key)
-
-        # We use pop to remove the axes values (time and frequency) from the file,
-        # so we can just iterate over what's left to rescale as it's all just data variables.
-        self._time = numpy.array(sav.pop('time'), dtype=numpy.datetime64)  # Parse the time column.
+        # Numpy defaults to using days with 'unix time' as the origin; we want actual Julian dates
+        self._time = Time(file[names.pop('time')], format='jd')
+        self._units['time'] = config['units']['time']
 
         # The frequency is spaced logarithmically from f[0]=3.9548001 to f[24] = 349.6542 and then linearly above that
-        # So we need to transform the frequency table in a full log table and interpolate the flux table
-        freq_original: ndarray = sav.pop('frequency')
+        # So we need to transform the frequency table in a full log table
+        freq_original: ndarray = file[names.pop('frequency')]
         self._freq = 10**(
             numpy.arange(
                 start=numpy.log10(freq_original[0]),
@@ -201,15 +203,27 @@ class DataSetCassini(DataSet):
                 dtype=float
             )
         )
+        self._units['frequency'] = config['units']['frequency']
 
-        # Now save the data (e.g. flux, power, degree of polarisation)
-        for key in sav:
-            variable: ndarray = sav.pop(key)
-            self._data[key] = numpy.zeros(
-                (len(self._freq), len(self._time)), dtype=float
-            )
-            # This absolutely can be done more efficiently
-            for i in range(len(self._time)):
-                self._data[key][:, i] = numpy.interp(self._freq, freq_original, variable[:, i])
+        # We use pop to take out the time and frequency names from the dictionary,
+        # so 'names' now only contains the dependent variables.
+        # Names can vary between files, so we have a 'standard' name and a 'name we'll see in the file'
 
+        for name_data, name_file in names.items():
+            # For each of the dependent variables in the config file, are any of them present in the file?
+            if name_file in file.keys():
+                # If so, we need to interpolate the full variable on our new frequency table
+                # Turn into an array to move into memory, otherwise we do a disk read for each access...
+                variable: ndarray = numpy.array(file[name_file])
+                self._data[name_data] = numpy.zeros(
+                    (len(self._freq), len(self._time)), dtype=float
+                )
+                # This absolutely can be done more efficiently
+                for i in range(len(self._time)):
+                    self._data[name_data][:, i] = numpy.interp(self._freq, freq_original, variable[:, i])
+
+                # And do the units
+                self._units[name_data] = config['units'][name_data]
+
+        log.info(f"Initialised Cassini dataset '{self._file_path_base}'")
         self.load_features_from_json()

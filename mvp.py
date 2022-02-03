@@ -1,9 +1,12 @@
 #! /usr/bin/python3
 import argparse
 import json
-import re
+import logging
+import os
+from astropy.time import Time
+from h5py import File
 from pathlib import Path
-from scipy.io import readsav
+
 from typing import Dict, List
 from datetime import datetime, timedelta
 
@@ -38,15 +41,15 @@ if __name__ == '__main__':
     # ==================== INPUT FILE ====================
     # First, we load the input file
     input_file: Path = Path(arguments.file[0])
-    if not input_file.suffix == '.sav':
-        raise ValueError(f"File '{input_file}' is not a '.sav' file")
+    if input_file.suffix != '.hdf5':
+        raise ValueError(f"File '{input_file}' is not a '.hdf5' file")
     elif not input_file.exists():
         raise FileNotFoundError(f"File '{input_file}' does not exist")
 
     try:
-        sav = readsav(str(input_file), python_dict=True)
-    except Exception:
-        raise ValueError(f"File '{input_file}' is not a valid '.sav' file")
+        file_hdf = File(input_file)
+    except Exception as e:
+        raise ValueError(f"File '{input_file}' is not a valid '.hdf5' file")
 
     # ==================== SATELLITE CONFIGURATION ====================
     # First, we scan the configs directory for entries
@@ -71,14 +74,13 @@ if __name__ == '__main__':
         # Once we find one (and only one) that fully describes the input file, we accept it as the configuration.
         valid_configs: dict = {}
         for config_name, config_entry in configs.items():
-            # print(config_entry, '\n', set(sav.keys()), '\n', set(config_entry['names'].values()))
-            if not set(sav.keys()) - set(config_entry['names'].values()):
+            if not set(file_hdf.keys()) - set(config_entry['names'].values()):
                 valid_configs[config_name] = config_entry
 
         if not valid_configs:
             raise FileNotFoundError(
                 f"No configuration files describe the columns of input file '{input_file}'.\n"
-                f"Columns are: {', '.join(sav.keys())}."
+                f"Columns are: {', '.join(file_hdf.keys())}."
             )
         elif len(valid_configs) > 1:
             raise ValueError(
@@ -91,19 +93,16 @@ if __name__ == '__main__':
     # ==================== DATE RANGE ====================
     # Validate the date range provided against the data in the file.
     try:
-        date_start = datetime.fromisoformat(arguments.date_range[0])
-        date_end = datetime.fromisoformat(arguments.date_range[1])
+        date_start = Time(arguments.date_range[0], format='isot')
+        date_end = Time(arguments.date_range[1], format='isot')
     except Exception:
         raise ValueError(
             f"Date range {arguments.date_range} is not in ISO date format.\n"
             f"Please provide the dates in the format YYYY-MM-DD e.g. 2005-01-01."
         )
 
-    data_start = sav[config['names']['time']][0]
-    data_end = sav[config['names']['time']][-1]
-
-    data_start = datetime.strptime(data_start.decode('utf-8'), '%Y-%m-%d %H:%M:%S.%f')
-    data_end = datetime.strptime(data_end.decode('utf-8'), '%Y-%m-%d %H:%M:%S.%f')
+    data_start = Time(file_hdf[config['names']['time']][0], format='jd')
+    data_end = Time(file_hdf[config['names']['time']][-1], format='jd')
 
     if date_start < data_start or date_end > data_end:
         raise ValueError(
@@ -111,9 +110,11 @@ if __name__ == '__main__':
             f"Please check your date range is YYYY-MM-DD format."
         )
 
+    logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+
     # ==================== CALL SPACE_DEVELOP ====================
     # Set up the MVP and go!
-    dataset: DataSetCassini = DataSetCassini(file_path=input_file, config=config, sav=sav)
+    dataset: DataSetCassini = DataSetCassini(file_path=input_file, config=config, file=file_hdf)
     view: View = View()
     presenter: Presenter = Presenter(dataset, view)
     presenter.request_data_time_range(time_start=date_start, time_end=date_end)

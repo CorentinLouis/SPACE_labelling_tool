@@ -1,3 +1,6 @@
+import logging
+
+from astropy.time import Time, TimeDelta
 from datetime import datetime, timedelta
 from numpy import datetime64
 from typing import List, Optional, Tuple
@@ -7,14 +10,17 @@ from spacelabel.models.feature import Feature
 from spacelabel.views import View
 
 
+log = logging.getLogger(__name__)
+
+
 class Presenter:
     """
 
     """
     _dataset: DataSet = None
     _view: View = None
-    _time_start: datetime = None
-    _time_end: datetime = None
+    _time_start: Time = None
+    _time_end: Time = None
     _measurements: Optional[List[str]] = None
 
     def __init__(self, dataset: DataSet, view: View, measurements: Optional[List[str]] = None):
@@ -29,6 +35,7 @@ class Presenter:
         self._measurements = measurements
         dataset.register_presenter(self)
         view.register_presenter(self)
+        log.info("Initialised presenter")
 
     def register_feature(self, vertexes: List[Tuple[datetime64, float]], name: str):
         """
@@ -45,7 +52,7 @@ class Presenter:
         self._dataset.write_features_to_json()
         self._dataset.write_features_to_text()
 
-    def request_data_time_range(self, time_start: datetime, time_end: datetime, days_padding: int = 3):
+    def request_data_time_range(self, time_start: Time, time_end: Time, days_padding: int = 3):
         """
         Selects the data for the given time range, and draws it on the figure.
         Adds a few days either side to render (but these are excluded when progressing forwards and back)
@@ -55,7 +62,7 @@ class Presenter:
         """
         self._time_start = time_start
         self._time_end = time_end
-        time_padding: timedelta = timedelta(days=days_padding)
+        time_padding: TimeDelta = TimeDelta(days_padding, format='jd')
 
         time, flux, data = self._dataset.get_data_for_time_range(
             time_start - time_padding, time_end + time_padding, measurements=self._measurements
@@ -66,7 +73,6 @@ class Presenter:
         features: List[Feature] = self._dataset.get_features_for_time_range(
             time_start - time_padding, time_end + time_padding
         )
-
         self._view.draw_features(
             features=[feature.vertexes() for feature in features]
         )
@@ -85,7 +91,7 @@ class Presenter:
         """
         Handles requests from the view to provide the previous window of data.
         """
-        time_window: timedelta = self._time_end - self._time_start
+        time_window: Time = self._time_end - self._time_start
         self.request_data_time_range(
             time_start=self._time_start - time_window,
             time_end=self._time_end
