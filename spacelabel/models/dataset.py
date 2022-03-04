@@ -22,8 +22,8 @@ from spacelabel.config import find_config_for_file
 if TYPE_CHECKING:
     from spacelabel.presenters import Presenter
 
-
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class DataSet(ABC):
@@ -39,15 +39,21 @@ class DataSet(ABC):
     _units: Dict[str, str] = {}
     _features: List[Feature] = []
     _presenter: 'Presenter' = None
+    _log_level: Optional[int] = None  # Passed to Features
 
-    def register_presenter(self, presenter: 'Presenter'):
-        """Links the dataset to the presenter that manages it."""
+    def register_presenter(self, presenter: 'Presenter', log_level: Optional[int] = None):
+        """
+        Links the dataset to the presenter that manages it.
+        """
         self._presenter = presenter
+        if log_level:
+            log.setLevel(log_level)
+            self._log_level = log_level
 
     def get_data_for_time_range(
             self, time_start: Time, time_end: Time,
             measurements: Union[None, str, List[str]] = None
-    ) -> Tuple[ndarray, ndarray, Dict[str, ndarray]]:
+    ) -> Tuple[Time, ndarray, Dict[str, ndarray]]:
         """
         Returns a dictionary containing the data for the specified time range.
         Implemented as returning a dictionary to make it easier to expand to multiple data types.
@@ -57,7 +63,7 @@ class DataSet(ABC):
         :param measurements: The types of parameter to get, all if None
         :return: A dictionary containing the keys 'time', 'freq', 'flux' and possibly 'power' and 'polarisation'
         """
-        log.info(f"Getting data for time range {time_start} to {time_end}")
+        log.info(f"get_data_for_time_range: From {time_start} to {time_end}")
 
         if measurements and not isinstance(measurements, list):
             # If the user hasn't specified a list of measurements, convert to a single-entry list for ease of use
@@ -72,20 +78,29 @@ class DataSet(ABC):
 
         return self._time[time_mask], self._freq, data
 
-    def add_feature(self, name: str, vertexes: List[Tuple[datetime64, float]]):
+    def add_feature(self, name: str, vertexes: List[Tuple[Time, float]]) -> Feature:
         """
         Adds a new feature (either from file or a polyselector on the plot).
+
         :param name: The name of the feature
         :param vertexes: A 2-d matplotlib array of coordinates as [time, freq]
-        :return:
+        :return: The feature added
         """
         self._features.append(
-            Feature(name=name, vertexes=vertexes, id=len(self._features))
+            Feature(
+                name=name,
+                vertexes=vertexes,
+                feature_id=len(self._features),
+                log_level=self._log_level
+            )
         )
+        log.debug(f"add_feature: {name} - {vertexes}")
+        return self._features[-1]
 
     def get_features_for_time_range(self, time_start: Time, time_end: Time) -> List[Feature]:
         """
         Returns the Features that are contained within the specified time range.
+
         :param time_start: The start of the time range (inclusive)
         :param time_end: The end of the time range (inclusive)
         :return: A list of the features (in feature format)
@@ -123,7 +138,11 @@ class DataSet(ABC):
                         feature.to_tfcat_dict() for feature in self._features
                     ],
                     "crs": {
-                        "name": "Time-Frequency", "properties": {
+                        "type": "Cartesian",
+                        "name": "Time-Frequency",
+                        "properties": {
+                            "type": "Cartesian",
+                            "name": "Time-Frequency",
                             "time_coords": {
                                 "id": "unix",  "name":  "Timestamp (Unix Time)", "unit": "s",
                                 "time_origin": "1970-01-01T00:00:00.000Z",
@@ -139,21 +158,42 @@ class DataSet(ABC):
                 },
                 file_json
             )
+        log.info(
+            f"write_features_to_json: Writing '{self._file_path_base.with_suffix('.json')}'"
+        )
 
     def load_features_from_json(self):
         """
         Loads the features for this datafile from a JSON file.
-        This *should* be called in the constructor. Possibly move this to the superclass constructor?
+        This *should* be called in the constructor.
+        Possibly move this to the superclass constructor?
         """
         path_tfcat: Path = self._file_path_base.with_suffix('.json')
-        if path_tfcat.exists() and validate_file(path_tfcat):
+
+        if not path_tfcat.exists():
+            log.info("load_features_from_json: No existing JSON file")
+        else:
+            log.info(
+                f"load_features_from_json: Loading '{self._file_path_base.with_suffix('.json')}'"
+            )
+            validate_file(path_tfcat)
+
             with open(path_tfcat, 'r') as file_json:
                 tfcat: Dict = json.load(file_json)
 
             for feature in tfcat["features"]:
+                vertexes = []
+                for vertex in feature['geometry']['coordinates'][0]:
+                    time = Time(vertex[0], format='unix')
+                    time.format = 'jd'  # This step prevents it being list comprehension
+                    vertexes.append((time, vertex[1]))
+
+                log.debug(
+                    f"load_features_from_json: Adding {feature['properties']['feature_type']} - {vertexes}"
+                )
                 self.add_feature(
                     name=feature['properties']['feature_type'],
-                    vertexes=feature['geometry']['coordinates'],
+                    vertexes=vertexes
                 )
 
 
@@ -165,7 +205,8 @@ class DataSetCassini(DataSet):
             self, file_path: Path,
             config: Optional[Dict] = None,
             frequency_resolution: Optional[int] = 400,
-            file: Optional[File] = None
+            file: Optional[File] = None,
+            log_level: Optional[int] = None
     ):
         """
         Reads a Cassini datafile in HDF5 format.
@@ -174,17 +215,21 @@ class DataSetCassini(DataSet):
         :param config: The configuration file to use, if any
         :param frequency_resolution: How many frequency bins to rescale to. Default 400
         :param file: If the HDF5 file has already been read, pass it through to save time
+        :param log_level: The level of logging to show from this object
         """
         self._file_path_base = file_path.with_suffix('')
         self._observer = config['observer']
 
-        log.info(f"Loading Cassini dataset '{self._file_path_base}'...")
+        log.info(f"DataSetCassini: Loading '{self._file_path_base}'...")
 
         if not file:
             file: File = File(file_path)
 
         if not config:
             config: dict = find_config_for_file(file)
+
+        if log_level:
+            log.setLevel(log_level)
 
         names: Dict[str, str] = config['names']
 
@@ -225,5 +270,5 @@ class DataSetCassini(DataSet):
                 # And do the units
                 self._units[name_data] = config['units'][name_data]
 
-        log.info(f"Initialised Cassini dataset '{self._file_path_base}'")
+        log.info(f"__init__: Initialised Cassini dataset '{self._file_path_base}'")
         self.load_features_from_json()

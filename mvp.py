@@ -7,8 +7,7 @@ from astropy.time import Time
 from h5py import File
 from pathlib import Path
 
-from typing import Dict, List
-from datetime import datetime, timedelta
+from typing import Dict
 
 from spacelabel.models.dataset import DataSetCassini
 from spacelabel.views import View
@@ -114,7 +113,10 @@ if __name__ == '__main__':
 
     # ==================== CALL SPACE_DEVELOP ====================
     # Set up the MVP and go!
-    dataset: DataSetCassini = DataSetCassini(file_path=input_file, config=config, file=file_hdf)
-    view: View = View()
-    presenter: Presenter = Presenter(dataset, view)
+    dataset: DataSetCassini = DataSetCassini(
+        file_path=input_file, config=config, file=file_hdf,
+        log_level=logging.DEBUG
+    )
+    view: View = View(log_level=logging.DEBUG)
+    presenter: Presenter = Presenter(dataset, view, log_level=logging.DEBUG)
     presenter.request_data_time_range(time_start=date_start, time_end=date_end)

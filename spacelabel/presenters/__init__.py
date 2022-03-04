@@ -9,6 +9,7 @@ from spacelabel.models.dataset import DataSet
 from spacelabel.models.feature import Feature
 from spacelabel.views import View
 
+DAYS_PADDING = 1  # Default number of days to show either side of the selected time range
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +24,11 @@ class Presenter:
     _time_end: Time = None
     _measurements: Optional[List[str]] = None
 
-    def __init__(self, dataset: DataSet, view: View, measurements: Optional[List[str]] = None):
+    def __init__(
+            self,
+            dataset: DataSet, view: View, measurements: Optional[List[str]] = None,
+            log_level: Optional[int] = None
+    ):
         """
         Initialises the presenter with the dataset and view it links
         :param dataset: The dataset
@@ -35,15 +40,19 @@ class Presenter:
         self._measurements = measurements
         dataset.register_presenter(self)
         view.register_presenter(self)
-        log.info("Initialised presenter")
+        if log_level:
+            log.setLevel(log_level)
 
-    def register_feature(self, vertexes: List[Tuple[datetime64, float]], name: str):
+        log.debug("Presenter: Initialised")
+
+    def register_feature(self, vertexes: List[Tuple[Time, float]], name: str) -> Feature:
         """
-        Registers a new feature on the dataset
-        :param vertexes:
-        :param name:
+        Registers a new feature on the dataset.
+
+        :param vertexes: List of vertexes in the format (julian date, frequency)
+        :param name: Name of the feature
         """
-        self._dataset.add_feature(name=name, vertexes=vertexes)
+        return self._dataset.add_feature(name=name, vertexes=vertexes)
 
     def request_save(self):
         """
@@ -52,30 +61,39 @@ class Presenter:
         self._dataset.write_features_to_json()
         self._dataset.write_features_to_text()
 
-    def request_data_time_range(self, time_start: Time, time_end: Time, days_padding: int = 3):
+    def request_data_time_range(
+            self,
+            time_start: Time,
+            time_end: Time,
+            days_padding: int = DAYS_PADDING
+    ):
         """
         Selects the data for the given time range, and draws it on the figure.
         Adds a few days either side to render (but these are excluded when progressing forwards and back)
+
         :param time_start: The start of the time window
         :param time_end: The end of the time window
         :param days_padding: Extra days that are added either side of the time range
         """
+        log.debug("request_data_time_range: Started...")
         self._time_start = time_start
         self._time_end = time_end
-        time_padding: TimeDelta = TimeDelta(days_padding, format='jd')
+        time_padding: TimeDelta = TimeDelta(
+            days_padding, format='jd'
+        )
 
         time, flux, data = self._dataset.get_data_for_time_range(
             time_start - time_padding, time_end + time_padding, measurements=self._measurements
         )
-        self._view.draw_data(
-            time, flux, data, self._dataset.get_units()
-        )
         features: List[Feature] = self._dataset.get_features_for_time_range(
             time_start - time_padding, time_end + time_padding
         )
-        self._view.draw_features(
-            features=[feature.vertexes() for feature in features]
+
+        self._view.draw_data(
+            time, flux, data, self._dataset.get_units(),
+            features=features
         )
+        log.debug(f"request_data_time_range: Complete")
 
     def request_data_next(self):
         """
@@ -86,6 +104,7 @@ class Presenter:
             time_start=self._time_start + time_window,
             time_end=self._time_end + time_window
         )
+        log.debug("request_data_next: Complete")
 
     def request_data_prev(self):
         """
@@ -94,5 +113,6 @@ class Presenter:
         time_window: Time = self._time_end - self._time_start
         self.request_data_time_range(
             time_start=self._time_start - time_window,
-            time_end=self._time_end
+            time_end=self._time_end - time_window
         )
+        log.debug("request_data_prev: Complete")

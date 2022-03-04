@@ -2,9 +2,10 @@ import json
 
 from pathlib import Path
 from typing import List, Dict
+from h5py import File
 
 
-def find_config_for_file(file: Dict) -> dict:
+def find_config_for_file(file: File) -> dict:
     """
 
     :param file: The dict-style input file

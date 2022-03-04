@@ -64,7 +64,7 @@ if __name__ == '__main__':
     # ==================== INPUT FILE ====================
     # First, we load the input file
     input_file: Path = Path(arguments.file[0])
-    if not input_file.suffix == '.sav':
+    if not input_file.suffix == '.hdf5':
         raise ValueError(f"File '{input_file}' is not a '.sav' file")
     elif not input_file.exists():
         raise FileNotFoundError(f"File '{input_file}' does not exist")
