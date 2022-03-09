@@ -22,7 +22,7 @@ They are JSON-format files with following structure:
     "frequency": "Frequency units, e.g. 'kHz'",
     "flux_density": "Flux density units, e.g. 'Wm^{-2}Hz^{-1}'",
     "power": "Power units, e.g. 'W/sr'",
-    "degree_of_polarisation": "Degree of polarisation units (probably just blank e.g. '')"
+    "degree_of_polarization": "Degree of polarisation units (probably just blank e.g. '')"
   },
   "years": [
     "Integer, year the spacecraft began taking data, e.g. 2004", 
@@ -39,11 +39,11 @@ whilst the operational years are used for validating calls to the script.
 
 ### Polarisation
 
-The `power` and `degree_of_polarisation` entries are needed for data files that contain polarisation data. 
-A configuration file can be valid if it *over*-specifies a file (e.g. providing polarisation information for a dataset
-that does not contain polarisation data) but cannot be valid if it *under*-specifies a file. 
-If a file contains polarisation data, even if you are not interested in it you must still have a configuration that
-describes all of the columns within that file to load it.
+The `power` and `degree_of_polarization` entries are needed for data files that contain polarization data. 
+A configuration file can be valid if it *over*-specifies a file (e.g. providing polarization information for a dataset
+that does not contain polarization data) but cannot be valid if it *under*-specifies a file. 
+If a file contains polarization data, even if you are not interested in it, you must still have a configuration that
+describes all the columns within that file to load it.
 
 ### Optional Units
 

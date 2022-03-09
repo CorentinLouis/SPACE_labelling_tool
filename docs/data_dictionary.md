@@ -16,4 +16,4 @@ and the code's ability to understand them is defined by the [spacecraft configur
 Some files will, additionally, contain two more columns:
 
 * **Power (float, [Frequency, Time]):** This is the power of the radio signal measured at the given time.
-* **Degree of Polarisation (float, [Frequency, Time]):** The degree of polarisation of the radio signal at the given time.
+* **Degree of Polarization (float, [Frequency, Time]):** The degree of polarization of the radio signal at the given time.

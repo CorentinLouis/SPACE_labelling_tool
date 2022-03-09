@@ -44,10 +44,22 @@ In the case of a file matching multiple spacecraft formats, the user is prompted
 
 Calling the code as:
 ```shell
-space_label.py cassini_data.sav 2004001 2004035
+space_label.py cassini_data.sav 2006-01-01 2006-01-03
 ```
 Will load the file `cassini_data.sav`, and display the radio observations
-for the time window 1/1/2004 to 4/2/2004.
+for the time window 1/1/2006 to 3/1/2006, plus some 1 day padding either side:
+
+![Example starting window](docs/img/main_screen.png)
+
+The **Previous** and **Next** buttons can be used to move the view back or forward in time by an amount equal to the 
+time window width (before padding), e.g. **Next** will move to show 3/1/2006 to 5/1/2006, plus 1 day either side.
+
+[!Example ]
+
+Clicking on the 
+
+The **Save** button will save the selected features to a TFCat file format, in the same directory as the input file, 
+titled `input_file_name.json`.
 
 
 ## Documentation
@@ -57,6 +69,9 @@ For more info on how to create a new one, see [spacecraft configurations](docs/s
 
 Information on the file formats this program inputs and outputs can be found in the [data dictionary](docs/data_dictionary.md).
 
+## Terminology
+
+* 'Polarization' has been chosen over 'Polarisation' as it is the Oxford standard for the spelling.
 
 
 ==============================================================

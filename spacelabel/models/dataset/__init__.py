@@ -1,29 +1,30 @@
 """
 Data sets from satellites.
-
-Should probably have the internal data representation moved from numpy arrays to astropy timeseries.
-This would also simplify units.
 """
 
 import json
 import logging
-import numpy
-from abc import ABC, abstractmethod
+from abc import ABC
 from astropy.time import Time
-from datetime import datetime
-from h5py import File
-from numpy import datetime64, ndarray  # Explicit import to make Typing easier
+from numpy import ndarray  # Explicit import to make Typing easier
 from pathlib import Path
 from tfcat.validate import validate_file
 from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING
 
 from spacelabel.models.feature import Feature
-from spacelabel.config import find_config_for_file
+
 if TYPE_CHECKING:
     from spacelabel.presenters import Presenter
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+
+# The human names of the various measurements.
+MEASUREMENT_NAMES = {
+    'flux_density': "Flux density",
+    'power': "Power",
+    'degree_of_polarization': "Degree of polarization",
+}
 
 
 class DataSet(ABC):
@@ -41,14 +42,25 @@ class DataSet(ABC):
     _presenter: 'Presenter' = None
     _log_level: Optional[int] = None  # Passed to Features
 
-    def register_presenter(self, presenter: 'Presenter', log_level: Optional[int] = None):
+    def __init__(self, log_level: Optional[int] = None):
+        """
+        Initializes the dataset. Mostly used to set log level.
+        """
+        if log_level:
+            log.setLevel(log_level)
+            self._log_level = log_level
+
+    def register_presenter(self, presenter: 'Presenter'):
         """
         Links the dataset to the presenter that manages it.
         """
         self._presenter = presenter
-        if log_level:
-            log.setLevel(log_level)
-            self._log_level = log_level
+
+    def get_measurement_names(self) -> List[str]:
+        """
+        Returns the list of measurement names, for filtering output by
+        """
+        return list(self._data.keys())
 
     def get_data_for_time_range(
             self, time_start: Time, time_end: Time,
@@ -61,7 +73,8 @@ class DataSet(ABC):
         :param time_start: The start of the time range (inclusive)
         :param time_end: The end of the time range (inclusive)
         :param measurements: The types of parameter to get, all if None
-        :return: A dictionary containing the keys 'time', 'freq', 'flux' and possibly 'power' and 'polarisation'
+        :return: Astropy Time, numpy frequency array, and a dictionary containing the keys 'flux'
+            and possibly 'power' and 'polarization'
         """
         log.info(f"get_data_for_time_range: From {time_start} to {time_end}")
 
@@ -75,6 +88,8 @@ class DataSet(ABC):
 
         for key in keys:
             data[key] = self._data[key][:, time_mask]
+
+        log.debug(f"get_data_for_time_range: Times {self._time[time_mask]}")
 
         return self._time[time_mask], self._freq, data
 
@@ -150,7 +165,7 @@ class DataSet(ABC):
                             },
                             "spectral_coords": {
                                 "name": "Frequency",
-                                "unit": self._units['frequency']
+                                "unit": self._units['Frequency']
                             },
                             "ref_position": {"id": self._observer}
                         }
@@ -179,7 +194,10 @@ class DataSet(ABC):
             validate_file(path_tfcat)
 
             with open(path_tfcat, 'r') as file_json:
-                tfcat: Dict = json.load(file_json)
+                try:
+                    tfcat: Dict = json.load(file_json)
+                except json.decoder.JSONDecodeError as e:
+                    log.error("load_features_from_json: File is not valid JSON (is it blank?)")
 
             for feature in tfcat["features"]:
                 vertexes = []
@@ -195,80 +213,3 @@ class DataSet(ABC):
                     name=feature['properties']['feature_type'],
                     vertexes=vertexes
                 )
-
-
-class DataSetCassini(DataSet):
-    """
-    Contains the data from a Cassini observation datafile.
-    """
-    def __init__(
-            self, file_path: Path,
-            config: Optional[Dict] = None,
-            frequency_resolution: Optional[int] = 400,
-            file: Optional[File] = None,
-            log_level: Optional[int] = None
-    ):
-        """
-        Reads a Cassini datafile in HDF5 format.
-
-        :param file_path: The path to the file
-        :param config: The configuration file to use, if any
-        :param frequency_resolution: How many frequency bins to rescale to. Default 400
-        :param file: If the HDF5 file has already been read, pass it through to save time
-        :param log_level: The level of logging to show from this object
-        """
-        self._file_path_base = file_path.with_suffix('')
-        self._observer = config['observer']
-
-        log.info(f"DataSetCassini: Loading '{self._file_path_base}'...")
-
-        if not file:
-            file: File = File(file_path)
-
-        if not config:
-            config: dict = find_config_for_file(file)
-
-        if log_level:
-            log.setLevel(log_level)
-
-        names: Dict[str, str] = config['names']
-
-        # Numpy defaults to using days with 'unix time' as the origin; we want actual Julian dates
-        self._time = Time(file[names.pop('time')], format='jd')
-        self._units['time'] = config['units']['time']
-
-        # The frequency is spaced logarithmically from f[0]=3.9548001 to f[24] = 349.6542 and then linearly above that
-        # So we need to transform the frequency table in a full log table
-        freq_original: ndarray = file[names.pop('frequency')]
-        self._freq = 10**(
-            numpy.arange(
-                start=numpy.log10(freq_original[0]),
-                stop=numpy.log10(freq_original[-1]),
-                step=(numpy.log10(max(freq_original))-numpy.log10(min(freq_original)))/(frequency_resolution-1),
-                dtype=float
-            )
-        )
-        self._units['frequency'] = config['units']['frequency']
-
-        # We use pop to take out the time and frequency names from the dictionary,
-        # so 'names' now only contains the dependent variables.
-        # Names can vary between files, so we have a 'standard' name and a 'name we'll see in the file'
-
-        for name_data, name_file in names.items():
-            # For each of the dependent variables in the config file, are any of them present in the file?
-            if name_file in file.keys():
-                # If so, we need to interpolate the full variable on our new frequency table
-                # Turn into an array to move into memory, otherwise we do a disk read for each access...
-                variable: ndarray = numpy.array(file[name_file])
-                self._data[name_data] = numpy.zeros(
-                    (len(self._freq), len(self._time)), dtype=float
-                )
-                # This absolutely can be done more efficiently
-                for i in range(len(self._time)):
-                    self._data[name_data][:, i] = numpy.interp(self._freq, freq_original, variable[:, i])
-
-                # And do the units
-                self._units[name_data] = config['units'][name_data]
-
-        log.info(f"__init__: Initialised Cassini dataset '{self._file_path_base}'")
-        self.load_features_from_json()

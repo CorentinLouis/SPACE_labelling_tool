@@ -9,8 +9,8 @@ from pathlib import Path
 
 from typing import Dict
 
-from spacelabel.models.dataset import DataSetCassini
-from spacelabel.views import View
+from spacelabel.models.dataset.cassini import DataSetCassini
+from spacelabel.views.matplotlib import ViewMatPlotLib
 from spacelabel.presenters import Presenter
 
 
@@ -100,8 +100,8 @@ if __name__ == '__main__':
             f"Please provide the dates in the format YYYY-MM-DD e.g. 2005-01-01."
         )
 
-    data_start = Time(file_hdf[config['names']['time']][0], format='jd')
-    data_end = Time(file_hdf[config['names']['time']][-1], format='jd')
+    data_start = Time(file_hdf[config['names']['Time']][0], format='jd')
+    data_end = Time(file_hdf[config['names']['Time']][-1], format='jd')
 
     if date_start < data_start or date_end > data_end:
         raise ValueError(
@@ -111,12 +111,13 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
-    # ==================== CALL SPACE_DEVELOP ====================
     # Set up the MVP and go!
     dataset: DataSetCassini = DataSetCassini(
         file_path=input_file, config=config, file=file_hdf,
         log_level=logging.DEBUG
     )
-    view: View = View(log_level=logging.DEBUG)
+    view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.DEBUG)
     presenter: Presenter = Presenter(dataset, view, log_level=logging.DEBUG)
+    presenter.request_measurements()
     presenter.request_data_time_range(time_start=date_start, time_end=date_end)
+    presenter.run()
