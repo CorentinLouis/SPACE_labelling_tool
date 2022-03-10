@@ -4,7 +4,7 @@ Data sets from satellites.
 
 import json
 import logging
-from abc import ABC
+from abc import ABC, abstractmethod
 from astropy.time import Time
 from numpy import ndarray  # Explicit import to make Typing easier
 from pathlib import Path
@@ -42,13 +42,22 @@ class DataSet(ABC):
     _presenter: 'Presenter' = None
     _log_level: Optional[int] = None  # Passed to Features
 
-    def __init__(self, log_level: Optional[int] = None):
+    def __init__(self, file_path: Path, log_level: Optional[int] = None):
         """
         Initializes the dataset. Mostly used to set log level.
         """
+        self._file_path_base = file_path.with_suffix('')
+
         if log_level:
             log.setLevel(log_level)
             self._log_level = log_level
+
+    @abstractmethod
+    def load_data(self):
+        """
+        Abstract method for loading the data from file
+        """
+        pass
 
     def register_presenter(self, presenter: 'Presenter'):
         """
@@ -61,6 +70,18 @@ class DataSet(ABC):
         Returns the list of measurement names, for filtering output by
         """
         return list(self._data.keys())
+
+    def validate_dates(self, dates: Tuple[Time, Time]):
+        """
+        Checks to see if the dates of interest are within the file time range.
+        :param dates:
+        :raise ValueError: If the dates are out of the time range in the file
+        """
+        if dates[0] < self._time[0] or dates[1] > self._time[-1]:
+            raise ValueError(
+                f"Date range {dates[0]}-{dates[1]} is outside of the data file range {self._time[0]}-{self._time[1]}.\n"
+                f"Please check your date range is YYYY-MM-DD format."
+            )
 
     def get_data_for_time_range(
             self, time_start: Time, time_end: Time,

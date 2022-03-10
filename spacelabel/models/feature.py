@@ -1,7 +1,10 @@
-import numpy
 import logging
+
+import numpy
+
 from astropy.time import Time
 from numpy import ndarray
+from shapely.geometry import LinearRing
 from typing import List, Tuple, Optional
 
 log = logging.getLogger(__name__)
@@ -52,15 +55,21 @@ class Feature:
 
         :return: A dictionary. Times are returned as Unix time, not calendar time
         """
+        coordinates = [
+            (time.uniq, freq) for time, freq in zip(self._time, self._freq)
+        ]
+
+        # TFcat format is counter-clockwise, so invert if our co-ordinates are not
+        if LinearRing(coordinates).is_ccw == False:
+            coordinates = coordinates[::-1]
+
         return {
             "type": "Feature",
             "id": self._id,
             "geometry": {
                 "type": "Polygon",
                 "coordinates": [
-                    [
-                        (time.unix, freq) for time, freq in zip(self._time, self._freq)
-                    ]
+                    [coordinates]
                 ]
             },
             "properties": {

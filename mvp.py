@@ -40,6 +40,7 @@ if __name__ == '__main__':
     # ==================== INPUT FILE ====================
     # First, we load the input file
     input_file: Path = Path(arguments.file[0])
+
     if input_file.suffix != '.hdf5':
         raise ValueError(f"File '{input_file}' is not a '.hdf5' file")
     elif not input_file.exists():
@@ -100,15 +101,6 @@ if __name__ == '__main__':
             f"Please provide the dates in the format YYYY-MM-DD e.g. 2005-01-01."
         )
 
-    data_start = Time(file_hdf[config['names']['Time']][0], format='jd')
-    data_end = Time(file_hdf[config['names']['Time']][-1], format='jd')
-
-    if date_start < data_start or date_end > data_end:
-        raise ValueError(
-            f"Date range {date_start}-{date_end} is outside of the data file range {data_start}-{data_end}.\n"
-            f"Please check your date range is YYYY-MM-DD format."
-        )
-
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
     # Set up the MVP and go!
@@ -116,6 +108,9 @@ if __name__ == '__main__':
         file_path=input_file, config=config, file=file_hdf,
         log_level=logging.DEBUG
     )
+
+    dataset.validate_dates([date_start, date_end])
+    dataset.load_data()
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.DEBUG)
     presenter: Presenter = Presenter(dataset, view, log_level=logging.DEBUG)
     presenter.request_measurements()

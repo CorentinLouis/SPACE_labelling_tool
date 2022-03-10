@@ -11,18 +11,18 @@ They are JSON-format files with following structure:
 {
   "observer": "Spacecraft name, e.g. 'Cassini', 'Juno'",
   "names": {
-    "time": "Column name, e.g. 't'",
-    "frequency": "Column name, e.g. 'f'",
-    "flux_density": "Column name, e.g. 's'",
-    "power": "Column name, e.g. 'p'",
-    "degree_of_polarisation": "Column name, e.g. 'v'"
+    "Time": "Column name, e.g. 't'",
+    "Frequency": "Column name, e.g. 'f'",
+    "Flux density": "Column name, e.g. 's'",
+    "Power": "Column name, e.g. 'p'",
+    "Degree of polarisation": "Column name, e.g. 'v'"
   },
   "units": {
-    "time": "Time units, e.g. 'Days'",
-    "frequency": "Frequency units, e.g. 'kHz'",
-    "flux_density": "Flux density units, e.g. 'Wm^{-2}Hz^{-1}'",
-    "power": "Power units, e.g. 'W/sr'",
-    "degree_of_polarization": "Degree of polarisation units (probably just blank e.g. '')"
+    "Time": "Time units, e.g. 'Days'",
+    "Frequency": "Frequency units, e.g. 'kHz'",
+    "Flux density": "Flux density units, e.g. 'Wm^{-2}Hz^{-1}'",
+    "Power": "Power units, e.g. 'W/sr'",
+    "Degree of polarization": "Degree of polarisation units (probably just blank e.g. '')"
   },
   "years": [
     "Integer, year the spacecraft began taking data, e.g. 2004", 
@@ -33,8 +33,8 @@ They are JSON-format files with following structure:
 
 ## Mandatory Entries
 
-A configuration file **must** contain an `observer`, `names` for `time`, `frequency` and `flux_density`, 
-units for `frequency` and the `years` of operation. The observer name and units are needed for TFCat output format, 
+A configuration file **must** contain an `observer`, `names` for `Time`, `Frequency` and `Flux density`, 
+units for `Frequency` and the `years` of operation. The observer name and units are needed for TFCat output format, 
 whilst the operational years are used for validating calls to the script.
 
 ### Polarisation
@@ -47,6 +47,5 @@ describes all the columns within that file to load it.
 
 ### Optional Units
 
-Most of the units entries are optional, but exist for future-proofing. 
-Plots can, in future, automatically title their axes based off of the units provided.
-By recording units for time, it is possible to accommodate later datasets with time columns 
+Most of the units entries are optional, but if present plots will automatically title their axes based off of them.
+By recording units for time, it is possible to accommodate later datasets with different time formats. 

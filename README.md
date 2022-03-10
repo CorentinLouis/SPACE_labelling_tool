@@ -6,6 +6,7 @@ Utility to allow for identification of radio features from spacecraft observatio
 ## Getting Started
 
 Clone this repository, and then install it in 'editable' mode as:
+
 ```shell
 git clone https://github.com/CorentinLouis/SPACE_labelling_tool.git
 pip install -e SPACE_labelling_tool
@@ -39,28 +40,32 @@ The code will attempt to identify which spacecraft the data file format correspo
 If it can't fit one of them, it will prompt the user to create a new spacecraft configuration file.
 In the case of a file matching multiple spacecraft formats, the user is prompted to select one.
 
+### GUI
+
+Once the file has loaded, it launches a GUI for selecting the measurements within the file to display, 
+and then to navigate the data selected. 
+The plot will display the time range selected, plus a 0.5 day window either side.
+
+There are the following interactive components:
+* **Measurements:** Each pane displays a measurement, with name, scale and units on the right. 
+  Features can be drawn by clicking to add coordinates, and completed by clicking on the first coordinate added again.
+  Once selected, a feature can be named. Features can be selected on any pane, and will be mirrored on all other panes.
+* **Prev/Next buttons:** These move through the data by an amount equal to the width of time range selected. 
+  This will also apply a 0.5 day window of overlap as 'padding'.
+* **Save button:** This will save any features to TFcat JSON format, as `FILE.json`.
+
+Once finished, you can save and then close the figure using the normal close button.
 
 ### Usage Examples
 
 Calling the code as:
 ```shell
-space_label.py cassini_data.sav 2006-01-01 2006-01-03
+space_label.py cassini_data.hdf5 2006-01-01 2006-01-03
 ```
-Will load the file `cassini_data.sav`, and display the radio observations
+Will load the file `cassini_data.hdf5`, and display the radio observations
 for the time window 1/1/2006 to 3/1/2006, plus some 1 day padding either side:
 
 ![Example starting window](docs/img/main_screen.png)
-
-The **Previous** and **Next** buttons can be used to move the view back or forward in time by an amount equal to the 
-time window width (before padding), e.g. **Next** will move to show 3/1/2006 to 5/1/2006, plus 1 day either side.
-
-[!Example ]
-
-Clicking on the 
-
-The **Save** button will save the selected features to a TFCat file format, in the same directory as the input file, 
-titled `input_file_name.json`.
-
 
 ## Documentation
 

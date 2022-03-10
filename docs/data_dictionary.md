@@ -1,8 +1,8 @@
 # Data Dictionary
 
-## `.sav` Files
+## `.hdf` Files
 
-Valid `.sav` files for input to this code *must* contain the following columns. The names of these columns can vary,
+Valid `.hdf` files for input to this code *must* contain the following columns. The names of these columns can vary,
 and the code's ability to understand them is defined by the [spacecraft configurations](spacecraft_configurations.md):
 
 * **Time (string, 1D):** The time of each observation. The time column is the index, and increases monotonically. 
@@ -16,4 +16,4 @@ and the code's ability to understand them is defined by the [spacecraft configur
 Some files will, additionally, contain two more columns:
 
 * **Power (float, [Frequency, Time]):** This is the power of the radio signal measured at the given time.
-* **Degree of Polarization (float, [Frequency, Time]):** The degree of polarization of the radio signal at the given time.
+* **Degree of polarization (float, [Frequency, Time]):** The degree of polarization of the radio signal at the given time.

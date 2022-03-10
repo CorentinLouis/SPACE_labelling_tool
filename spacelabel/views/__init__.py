@@ -63,5 +63,3 @@ class View(ABC):
         Abstract method to draw the data and features provided
         """
         pass
-
-
