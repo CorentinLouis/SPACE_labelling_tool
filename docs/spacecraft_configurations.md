@@ -11,18 +11,18 @@ They are JSON-format files with following structure:
 {
   "observer": "Spacecraft name, e.g. 'Cassini', 'Juno'",
   "names": {
-    "time": "Column name, e.g. 't'",
-    "frequency": "Column name, e.g. 'f'",
-    "flux_density": "Column name, e.g. 's'",
-    "power": "Column name, e.g. 'p'",
-    "degree_of_polarisation": "Column name, e.g. 'v'"
+    "Time": "Column name, e.g. 't'",
+    "Frequency": "Column name, e.g. 'f'",
+    "Flux density": "Column name, e.g. 's'",
+    "Power": "Column name, e.g. 'p' (optional)",
+    "Degree of polarization": "Column name, e.g. 'v' (optional)"
   },
   "units": {
-    "time": "Time units, e.g. 'Days'",
-    "frequency": "Frequency units, e.g. 'kHz'",
-    "flux_density": "Flux density units, e.g. 'Wm^{-2}Hz^{-1}'",
-    "power": "Power units, e.g. 'W/sr'",
-    "degree_of_polarisation": "Degree of polarisation units (probably just blank e.g. '')"
+    "Time": "Time units, e.g. 'Days'",
+    "Frequency": "Frequency units, e.g. 'kHz'",
+    "Flux density": "Flux density units, e.g. 'Wm^{-2}Hz^{-1}'",
+    "Power": "Power units, e.g. 'W/sr' (optional)",
+    "Degree of polarization": "Degree of polarization units (probably just blank e.g. '')(optional)"
   },
   "years": [
     "Integer, year the spacecraft began taking data, e.g. 2004", 
@@ -33,20 +33,25 @@ They are JSON-format files with following structure:
 
 ## Mandatory Entries
 
-A configuration file **must** contain an `observer`, `names` for `time`, `frequency` and `flux_density`, 
-units for `frequency` and the `years` of operation. The observer name and units are needed for TFCat output format, 
+A configuration file **must** contain an `observer`, `names` and `units` for `Time`, `Frequency` and `Flux density`,
+ and the `years` of operation. The observer name is needed for TFCat output format, 
 whilst the operational years are used for validating calls to the script.
 
-### Polarisation
+Each measurement requires a corresponding entry in `units`. These are displayed on the figures,
+and can use LaTeX formatting like `^{2}` or `\alpha`. You do not need to wrap LaTeX text in `$` symbols. 
 
-The `power` and `degree_of_polarisation` entries are needed for data files that contain polarisation data. 
-A configuration file can be valid if it *over*-specifies a file (e.g. providing polarisation information for a dataset
-that does not contain polarisation data) but cannot be valid if it *under*-specifies a file. 
-If a file contains polarisation data, even if you are not interested in it you must still have a configuration that
-describes all of the columns within that file to load it.
+### Optional Entries
 
-### Optional Units
+Optional entries can include `Power` and `Degree of polarization`, but any measurement can be
+added. The key used (e.g. `Power`) will be the display name for the measurement used in the tool. 
 
-Most of the units entries are optional, but exist for future-proofing. 
-Plots can, in future, automatically title their axes based off of the units provided.
-By recording units for time, it is possible to accommodate later datasets with time columns 
+A configuration file can be valid if it *over*-specifies a file (e.g. providing polarization information for a dataset
+that does not contain polarization data) but cannot be valid if it *under*-specifies a file. 
+If a file contains polarization data, even if you are not interested in it, you must still have a configuration that
+describes all the columns within that file to load it.
+
+## Creating New Configurations
+
+To create a configuration file for a new spacecraft, copy the example above or the pre-made
+[example.json](example.json) file, name it appropriately, and place it in the `config` folder.
+If you have installed the labelling tool in editable mode, it should recognise the new file.

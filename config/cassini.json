@@ -1,18 +1,18 @@
 {
   "observer": "Cassini",
   "names": {
-    "time": "t",
-    "frequency": "f",
-    "flux_density": "s",
-    "power": "p",
-    "degree_of_polarisation": "v"
+    "Time": "t",
+    "Frequency": "f",
+    "Flux density": "s",
+    "Power": "p",
+    "Degree of polarization": "v"
   },
   "units": {
-    "time": "Day",
-    "frequency": "kHz",
-    "flux_density": "Wm^{-2}Hz^{-1}",
-    "power": "W/sr",
-    "degree_of_polarisation": ""
+    "Time": "Day",
+    "Frequency": "kHz",
+    "Flux density": "Wm^{-2}Hz^{-1}",
+    "Power": "W/sr",
+    "Degree of polarization": ""
   },
   "years": [2004, 2017]
 }
