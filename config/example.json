@@ -1,0 +1,18 @@
+{
+  "observer": "?",
+  "names": {
+    "Time": "?",
+    "Frequency": "?",
+    "Flux density": "?",
+    "Power": "?",
+    "Degree of polarization": "?"
+  },
+  "units": {
+    "Time": "Julian day",
+    "Frequency": "?",
+    "Flux density": "?",
+    "Power": "?",
+    "Degree of polarization": ""
+  },
+  "years": [2016, 2025]
+}

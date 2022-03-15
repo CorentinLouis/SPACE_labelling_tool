@@ -207,7 +207,7 @@ class ViewMatPlotLib(View):
 
         self._create_polyselector()
         # self._fig.show()
-        show(block=False)  # `fig.show()` doesn't work
+        show()  # `fig.show()` doesn't work
 
         log.debug(f"draw_data: Complete [{len(freq)}x{len(time)}]")
 

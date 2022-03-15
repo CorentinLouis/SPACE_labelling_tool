@@ -1,18 +1,14 @@
 {
-  "observer": "Juno",
+  "observer": "?",
   "names": {
-    "Time": "?",
-    "Frequency": "?",
-    "Flux density": "?",
-    "Power": "?",
-    "Degree of polarization": "?"
+    "Time": "t",
+    "Frequency": "f",
+    "Flux density": "zlincal"
   },
   "units": {
     "Time": "Julian day",
     "Frequency": "?",
-    "Flux density": "?",
-    "Power": "?",
-    "Degree of polarization": ""
+    "Flux density": "?"
   },
   "years": [2016, 2025]
 }

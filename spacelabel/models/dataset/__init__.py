@@ -52,13 +52,6 @@ class DataSet(ABC):
             log.setLevel(log_level)
             self._log_level = log_level
 
-    @abstractmethod
-    def load_data(self):
-        """
-        Abstract method for loading the data from file
-        """
-        pass
-
     def register_presenter(self, presenter: 'Presenter'):
         """
         Links the dataset to the presenter that manages it.
@@ -109,8 +102,6 @@ class DataSet(ABC):
 
         for key in keys:
             data[key] = self._data[key][:, time_mask]
-
-        log.debug(f"get_data_for_time_range: Times {self._time[time_mask]}")
 
         return self._time[time_mask], self._freq, data
 

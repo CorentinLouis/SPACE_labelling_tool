@@ -1,41 +1,17 @@
 #! /usr/bin/python3
-"""
-SPACE Labelling Tool
-
-Utility to allow for identification of radio features from spacecraft observations via a GUI.
-
-usage: space_label.py [-h] [-s SPACECRAFT] [-y YEAR_ORIGIN] FILE DATE DATE
-
-positional arguments:
-  FILE            The name of the IDL .sav file to analyse
-  DATE            The window of days to plot, in YYYYDDD format, e.g. '2003334
-                  2003365' for December 2003. The data will be scrolled through
-                  in blocks of this window's width.
-
-optional arguments:
-  -h, --help      show this help message and exit
-  -s SPACECRAFT   The name of the spacecraft. Auto-detected from the input file
-                  columns, but required if multiple spacecraft describe the
-                  same input file. Valid options are: cassini, juno.
-  -y YEAR_ORIGIN  The year of origin, from which times in the dataset are the
-                  data set was taken. Auto-detected from the first number in
-                  the input file name, but can be provided if there is none,
-                  or if this is incorrect.
-
-The code will attempt to identify which spacecraft the data file format corresponds to, and read the file intelligently.
-If it can't fit one of them, it will prompt the user to create a new spacecraft configuration file.
-In the case of a file matching multiple spacecraft formats, the user is prompted to select one.
-
-"""
 import argparse
 import json
-import re
+import logging
+import os
+from astropy.time import Time
+from h5py import File
 from pathlib import Path
-from scipy.io import readsav
-from typing import Dict, List
-from datetime import datetime, timedelta
 
-from space_develop import open_and_draw, plot_and_interact
+from typing import Dict
+
+from spacelabel.models.dataset.hdf5 import DataSetHDF5
+from spacelabel.views.matplotlib import ViewMatPlotLib
+from spacelabel.presenters import Presenter
 
 
 if __name__ == '__main__':
@@ -44,7 +20,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "file", type=str, nargs=1, metavar="FILE",
-        help="The name of the IDL .sav file to analyse."
+        help="The name of the HDF5 file to analyse."
     )
     parser.add_argument(
         'date_range', type=str, nargs=2, metavar="DATE",
@@ -64,15 +40,16 @@ if __name__ == '__main__':
     # ==================== INPUT FILE ====================
     # First, we load the input file
     input_file: Path = Path(arguments.file[0])
-    if not input_file.suffix == '.hdf5':
-        raise ValueError(f"File '{input_file}' is not a '.sav' file")
+
+    if input_file.suffix != '.hdf5':
+        raise ValueError(f"File '{input_file}' is not a '.hdf5' file")
     elif not input_file.exists():
         raise FileNotFoundError(f"File '{input_file}' does not exist")
 
     try:
-        sav = readsav(str(input_file), python_dict=True)
-    except Exception:
-        raise ValueError(f"File '{input_file}' is not a valid '.sav' file")
+        file_hdf = File(input_file)
+    except Exception as e:
+        raise ValueError(f"File '{input_file}' is not a valid '.hdf5' file")
 
     # ==================== SATELLITE CONFIGURATION ====================
     # First, we scan the configs directory for entries
@@ -97,14 +74,13 @@ if __name__ == '__main__':
         # Once we find one (and only one) that fully describes the input file, we accept it as the configuration.
         valid_configs: dict = {}
         for config_name, config_entry in configs.items():
-            # print(config_entry, '\n', set(sav.keys()), '\n', set(config_entry['names'].values()))
-            if not set(sav.keys()) - set(config_entry['names'].values()):
+            if not set(file_hdf.keys()) - set(config_entry['names'].values()):
                 valid_configs[config_name] = config_entry
 
         if not valid_configs:
             raise FileNotFoundError(
                 f"No configuration files describe the columns of input file '{input_file}'.\n"
-                f"Columns are: {', '.join(sav.keys())}."
+                f"Columns are: {', '.join(file_hdf.keys())}."
             )
         elif len(valid_configs) > 1:
             raise ValueError(
@@ -117,40 +93,25 @@ if __name__ == '__main__':
     # ==================== DATE RANGE ====================
     # Validate the date range provided against the data in the file.
     try:
-        date_start = datetime.fromisoformat(arguments.date_range[0])
-        date_end = datetime.fromisoformat(arguments.date_range[1])
+        date_start = Time(arguments.date_range[0], format='isot')
+        date_end = Time(arguments.date_range[1], format='isot')
     except Exception:
         raise ValueError(
             f"Date range {arguments.date_range} is not in ISO date format.\n"
             f"Please provide the dates in the format YYYY-MM-DD e.g. 2005-01-01."
         )
 
-    data_start = sav[config['names']['time']][0]
-    data_end = sav[config['names']['time']][-1]
+    logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
-    data_start = datetime.fromisoformat(data_start)
-    data_end = datetime.fromisoformat(data_end)
-
-    if date_start < data_start or date_end > data_end:
-        raise ValueError(
-            f"Date range {date_start}-{date_end} is outside of the data file range {data_start}-{data_end}.\n"
-            f"Please check your date range is YYYY-MM-DD format."
-        )
-
-    # ==================== CALL SPACE_DEVELOP ====================
-    # We've now validated all the input files and arguments. Let's pass all that data to space_develop.py.
-    # This is just a copy-paste of the calls at the end of space_develop.py.
-    saved_polys = open_and_draw(
-        date_start, date_end
+    # Set up the MVP and go!
+    dataset: DataSetHDF5 = DataSetHDF5(
+        file_path=input_file, config=config, file=file_hdf,
+        log_level=logging.INFO
     )
-    plot_and_interact(
-        date_start, date_end,
-        {
-            'name': input_file, 'obs': config['observer'],
-            'units': config['units']['frequency'],
-            'time': config['names']['time'],
-            'freq': config['names']['frequency'],
-            'flux': config['names']['flux_density'],
-        },
-        colour_in=saved_polys, again=True
-    )
+
+    dataset.validate_dates((date_start, date_end))
+    view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)
+    presenter: Presenter = Presenter(dataset, view, log_level=logging.INFO)
+    presenter.request_measurements()
+    presenter.request_data_time_range(time_start=date_start, time_end=date_end)
+    presenter.run()
