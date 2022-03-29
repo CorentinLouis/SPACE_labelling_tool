@@ -9,7 +9,7 @@ from spacelabel.models.dataset import DataSet
 from spacelabel.models.feature import Feature
 from spacelabel.views.matplotlib import ViewMatPlotLib
 
-DAYS_PADDING = 0.5  # Default number of days to show either side of the selected time range
+OVERLAP_FRACTION = 0.25  # Default fraction of window to use as overlap when panning through data
 
 log = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class Presenter:
             self,
             time_start: Time,
             time_end: Time,
-            days_padding: int = DAYS_PADDING
+            overlap_fraction: float = OVERLAP_FRACTION
     ):
         """
         Selects the data for the given time range, and draws it on the figure.
@@ -92,20 +92,17 @@ class Presenter:
 
         :param time_start: The start of the time window
         :param time_end: The end of the time window
-        :param days_padding: Extra days that are added either side of the time range
+
         """
         log.debug("request_data_time_range: Started...")
         self._time_start = time_start
         self._time_end = time_end
-        time_padding: TimeDelta = TimeDelta(
-            days_padding, format='jd'
-        )
 
         time, flux, data = self._dataset.get_data_for_time_range(
-            time_start - time_padding, time_end + time_padding, measurements=self._measurements
+            time_start, time_end, measurements=self._measurements
         )
         features: List[Feature] = self._dataset.get_features_for_time_range(
-            time_start - time_padding, time_end + time_padding
+            time_start, time_end
         )
 
         self._view.draw_data(
@@ -114,24 +111,30 @@ class Presenter:
         )
         log.debug(f"request_data_time_range: Complete")
 
-    def request_data_next(self):
+    def request_data_next(self, overlap_fraction: float = OVERLAP_FRACTION):
         """
         Handles requests from the view to provide the next window of data.
+
+        :param overlap_fraction: Fraction of the range to overlap with the previous window
         """
         time_window: timedelta = self._time_end - self._time_start
+
         self.request_data_time_range(
-            time_start=self._time_start + time_window,
-            time_end=self._time_end + time_window
+            time_start=self._time_start + time_window * (1.0 - overlap_fraction),
+            time_end=self._time_end + time_window * (1.0 - overlap_fraction)
         )
         log.debug("request_data_next: Complete")
 
-    def request_data_prev(self):
+    def request_data_prev(self, overlap_fraction: float = OVERLAP_FRACTION):
         """
         Handles requests from the view to provide the previous window of data.
+
+        :param overlap_fraction: Fraction of the range to overlap with the previous window
         """
-        time_window: Time = self._time_end - self._time_start
+        time_window: timedelta = self._time_end - self._time_start
+
         self.request_data_time_range(
-            time_start=self._time_start - time_window,
-            time_end=self._time_end - time_window
+            time_start=self._time_start - time_window * (1.0 - overlap_fraction),
+            time_end=self._time_end - time_window * (1.0 - overlap_fraction)
         )
         log.debug("request_data_prev: Complete")
