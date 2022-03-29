@@ -30,7 +30,7 @@ class Feature:
 
         :param name: The name of the feature
         :param vertexes: The time-flux pairs of the vertexes defining it
-        :param id: The internal ID number for the feature
+        :param feature_id: The internal ID number for the feature
         :param log_level: The level of logging to show. Inherited from DataSet
         """
         self._name = name
@@ -56,11 +56,11 @@ class Feature:
         :return: A dictionary. Times are returned as Unix time, not calendar time
         """
         coordinates = [
-            (time.uniq, freq) for time, freq in zip(self._time, self._freq)
+            (time.unix, freq) for time, freq in zip(self._time, self._freq)
         ]
 
         # TFcat format is counter-clockwise, so invert if our co-ordinates are not
-        if LinearRing(coordinates).is_ccw == False:
+        if not LinearRing(coordinates).is_ccw:
             coordinates = coordinates[::-1]
 
         return {
@@ -79,11 +79,11 @@ class Feature:
 
     def is_in_time_range(self, time_start: Time, time_end: Time) -> bool:
         """
-        Whether or not the feature is within this time range.
+        Whether the feature is within this time range.
 
         :param time_start: The start of the time range (inclusive)
         :param time_end: The end of the time range (inclusive)
-        :return: Whether or not the time range contains any part of this feature
+        :return: Whether the time range contains any part of this feature
         """
         return (time_start <= self._time.min() <= time_end) or (time_start <= self._time.max() <= time_end)
 
@@ -103,6 +103,6 @@ class Feature:
 
         :return: The co-ordinates in seperated arrays
         """
-        return [
+        return (
             self._time, self._freq
-        ]
+        )
