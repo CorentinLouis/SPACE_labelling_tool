@@ -6,10 +6,14 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from astropy.time import Time
+from astropy.io.misc.hdf5 import write_table_hdf5
+from h5py import File
+import numpy
 from numpy import ndarray  # Explicit import to make Typing easier
 from pathlib import Path
 from tfcat.validate import validate_file
-from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING
+from tqdm import trange
+from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING, Type
 
 from spacelabel.models.feature import Feature
 
@@ -32,7 +36,7 @@ class DataSet(ABC):
     Contains the data from a spacecraft. Implemented differently for different data file formats.
     This is the *abstract* base class that does not implement loading from file.
     """
-    _file_path_base: Path = None
+    _file_path: Path = None  # The suffix-less file path
     _observer: str = None
     _time: Time = None
     _freq: ndarray = None
@@ -41,16 +45,82 @@ class DataSet(ABC):
     _features: List[Feature] = []
     _presenter: 'Presenter' = None
     _log_level: Optional[int] = None  # Passed to Features
+    _config: Optional[Dict] = None  # The configuration used
 
-    def __init__(self, file_path: Path, log_level: Optional[int] = None):
+    def __init__(self, file_path: Path, config: Optional[dict] = None, log_level: Optional[int] = None):
         """
         Initializes the dataset. Mostly used to set log level.
+
+        :param file_path: The path to the file
+        :param config: The configuration file to use, if any. Should be handled in subclass
+        :param log_level: The level of logging to show from this object
         """
-        self._file_path_base = file_path.with_suffix('')
+        self._file_path = file_path
 
         if log_level:
             log.setLevel(log_level)
             self._log_level = log_level
+
+        self.load_features_from_json()
+
+    @abstractmethod
+    def load(self):
+        """
+        Implemented in the specific subtypes, this loads the data from file.
+        Deferred load as we only want to part-load e.g. dates for quick validation.
+        """
+        pass
+
+    def rescale_frequency(self, frequency_resolution: int):
+        """
+        Rescales the frequency and all measurements to a single logarithmic range, then saves to an HDF5 file.
+
+        :param frequency_resolution: The number of frequency bins to rescale to
+        """
+        freq_original = self._freq
+        freq_rescaled = 10 ** (
+            numpy.arange(
+                start=numpy.log10(freq_original[0]),
+                stop=numpy.log10(freq_original[-1]),
+                step=(numpy.log10(max(freq_original)) - numpy.log10(min(freq_original))) / (frequency_resolution - 1),
+                dtype=float
+            )
+        )
+
+        log.info(f"rescale_frequency: Preprocessing {len(self._data.keys())} measurements...")
+        for name, measurement_original in self._data.items():
+            # Turn into an array to move into memory, otherwise we do a disk read for each access...
+            self._data[name] = numpy.zeros(
+                (len(self._freq), len(self._time)), dtype=float
+            )
+            # This absolutely can be done more efficiently
+            for i in trange(len(self._time)):
+                self._data[name][:, i] = numpy.interp(self._freq, freq_original, measurement_original[:, i])
+
+        self.save_to_hdf()
+
+    def save_to_hdf(self):
+        """
+        Saves the data to disk as a pre-processed HDF5 file.
+        """
+        output_file = File(
+            self._file_path.with_suffix('.preprocessed.hdf5'), 'w'
+        )
+        output_file.attrs.create('observer', self._observer)
+        output_file.attrs.create('years', self._config['years'])
+
+        # Has to be done differently as this is an Astropy quantity
+        output_file.create_dataset('Time', data=numpy.array(self._time.jd1+self._time.jd2))
+        output_file['Time'].attrs.create('units', self._units['Time'])
+
+        output_file.create_dataset('Frequency', data=self._freq)
+        output_file['Frequency'].attrs.create('units',  self._units['Frequency'])
+
+        for key, value in self._data.items():
+            output_file.create_dataset(key, data=value)
+            output_file[key].attrs['units'] = self._units[key]
+
+        output_file.close()
 
     def register_presenter(self, presenter: 'Presenter'):
         """
@@ -90,7 +160,7 @@ class DataSet(ABC):
         :return: Astropy Time, numpy frequency array, and a dictionary containing the keys 'flux'
             and possibly 'power' and 'polarization'
         """
-        log.info(f"get_data_for_time_range: From {time_start} to {time_end}")
+        log.info(f"get_data_for_time_range: From {time_start} ({time_start.jd}) to {time_end} ({time_end.jd})")
 
         if measurements and not isinstance(measurements, list):
             # If the user hasn't specified a list of measurements, convert to a single-entry list for ease of use
@@ -149,7 +219,7 @@ class DataSet(ABC):
         """
         Writes a summary of the bounds of the features that have been selected, to text file.
         """
-        with open(self._file_path_base.with_suffix('.txt'), 'w') as file_text:
+        with open(self._file_path.with_suffix('.txt'), 'w') as file_text:
             for feature in self._features:
                 file_text.write(f'{feature.to_text_summary()}\n')
 
@@ -157,7 +227,7 @@ class DataSet(ABC):
         """
         Writes the details of the bounds of each feature, to a TFCat-format JSON file.
         """
-        with open(self._file_path_base.with_suffix('.json'), 'w') as file_json:
+        with open(self._file_path.with_suffix('.json'), 'w') as file_json:
             json.dump(
                 {
                     "type": "FeatureCollection",
@@ -186,22 +256,20 @@ class DataSet(ABC):
                 file_json
             )
         log.info(
-            f"write_features_to_json: Writing '{self._file_path_base.with_suffix('.json')}'"
+            f"write_features_to_json: Writing '{self._file_path.with_suffix('.json')}'"
         )
 
     def load_features_from_json(self):
         """
         Loads the features for this datafile from a JSON file.
-        This *should* be called in the constructor.
-        Possibly move this to the superclass constructor?
         """
-        path_tfcat: Path = self._file_path_base.with_suffix('.json')
+        path_tfcat: Path = self._file_path.with_suffix('.json')
 
         if not path_tfcat.exists():
             log.info("load_features_from_json: No existing JSON file")
         else:
             log.info(
-                f"load_features_from_json: Loading '{self._file_path_base.with_suffix('.json')}'"
+                f"load_features_from_json: Loading '{self._file_path.with_suffix('.json')}'"
             )
             validate_file(path_tfcat)
 

@@ -59,6 +59,7 @@ class Feature:
             (time.unix, freq) for time, freq in zip(self._time, self._freq)
         ]
 
+
         # TFcat format is counter-clockwise, so invert if our co-ordinates are not
         if not LinearRing(coordinates).is_ccw:
             coordinates = coordinates[::-1]
@@ -69,7 +70,7 @@ class Feature:
             "geometry": {
                 "type": "Polygon",
                 "coordinates": [
-                    [coordinates]
+                    coordinates
                 ]
             },
             "properties": {
