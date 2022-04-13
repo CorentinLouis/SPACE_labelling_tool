@@ -7,9 +7,10 @@ from astropy.time import Time
 from h5py import File
 from pathlib import Path
 
-from typing import Dict
+from typing import Dict, Type
 
-from spacelabel.models.dataset.hdf5 import DataSetHDF5
+from spacelabel.models.dataset import DataSet
+from spacelabel.models.dataset.load import load_dataset, DATASET_TYPES
 from spacelabel.views.matplotlib import ViewMatPlotLib
 from spacelabel.presenters import Presenter
 
@@ -41,24 +42,20 @@ if __name__ == '__main__':
     # First, we load the input file
     input_file: Path = Path(arguments.file[0])
 
-    if input_file.suffix != '.hdf5':
-        raise ValueError(f"File '{input_file}' is not a '.hdf5' file")
+    if input_file.suffix not in DATASET_TYPES.keys():
+        raise ValueError(
+            f"File '{input_file}' is not a valid format! Supported formats are: {', '.join(DATASET_TYPES.keys())}"
+        )
     elif not input_file.exists():
         raise FileNotFoundError(f"File '{input_file}' does not exist")
 
-    try:
-        file_hdf = File(input_file)
-    except Exception as e:
-        raise ValueError(f"File '{input_file}' is not a valid '.hdf5' file")
-
     # ==================== SATELLITE CONFIGURATION ====================
-    # First, we scan the configs directory for entries
-    configs: Dict[str, dict] = {}
-    for config_file in (Path(__file__).parent / 'config').glob('*.json'):
-        configs[config_file.stem] = json.load(config_file.open())
-
-    # Now, we decide on which satellite should be used
     if arguments.config:
+        # The user has specified a configuration. First, we scan the configs directory for entries.
+        configs: Dict[str, dict] = {}
+        for config_file in (Path(__file__).parent / 'config').glob('*.json'):
+            configs[config_file.stem] = json.load(config_file.open())
+
         # If we've been provided a configuration option, and it's in our list of configs, use it,
         # otherwise report that it's wrong to the user
         if arguments.config in configs.keys():
@@ -68,27 +65,9 @@ if __name__ == '__main__':
                 f"Spacecraft '{arguments.config}' is not one of the available configurations.\n"
                 f"Options are: {','.join(configs.keys())}."
             )
-
     else:
-        # We iterate over each of the possible configurations.
-        # Once we find one (and only one) that fully describes the input file, we accept it as the configuration.
-        valid_configs: dict = {}
-        for config_name, config_entry in configs.items():
-            if not set(file_hdf.keys()) - set(config_entry['names'].values()):
-                valid_configs[config_name] = config_entry
-
-        if not valid_configs:
-            raise FileNotFoundError(
-                f"No configuration files describe the columns of input file '{input_file}'.\n"
-                f"Columns are: {', '.join(file_hdf.keys())}."
-            )
-        elif len(valid_configs) > 1:
-            raise ValueError(
-                f"Too many configuration files describe the columns of input file '{input_file}'.\n"
-                f"Matching options are: {', '.join([valid_config for valid_config in valid_configs.keys()])}."
-            )
-        else:
-            config = list(valid_configs.values())[0]
+        # Let the code decide the config itself.
+        config = None
 
     # ==================== DATE RANGE ====================
     # Validate the date range provided against the data in the file.
@@ -104,12 +83,13 @@ if __name__ == '__main__':
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
     # Set up the MVP and go!
-    dataset: DataSetHDF5 = DataSetHDF5(
-        file_path=input_file, config=config, file=file_hdf,
-        log_level=logging.INFO
+    dataset: DataSet = load_dataset(
+        file_path=input_file, config=config,
+        log_level=logging.DEBUG
     )
-
     dataset.validate_dates((date_start, date_end))
+    dataset.load()  # Load the dataset if the dates are valid
+
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)
     presenter: Presenter = Presenter(dataset, view, log_level=logging.INFO)
     presenter.request_measurements()

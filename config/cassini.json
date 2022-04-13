@@ -14,5 +14,6 @@
     "Power": "W/sr",
     "Degree of polarization": ""
   },
-  "years": [2004, 2017]
+  "years": [2004, 2017],
+  "frequency_rescale": 400
 }

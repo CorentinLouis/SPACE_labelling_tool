@@ -1,7 +1,9 @@
 import logging
+import platform
 import textwrap
 from typing import Tuple, Dict, Optional, List
 
+import matplotlib
 import numpy
 
 from astropy.time import Time
@@ -53,6 +55,13 @@ class ViewMatPlotLib(View):
             log.setLevel(log_level)
 
         ion()  # We want interactive MatPlotLib mode
+
+        # Try to fix backend issues
+        if platform.system() == 'Windows':
+            matplotlib.use('Qt5Agg')
+        elif platform.system() == 'Darwin':
+            matplotlib.use('MacOSX')
+
         log.debug("ViewMatPlotLib: Initialised")
 
     def _create_canvas(self, measurements: List[str]):
@@ -159,8 +168,8 @@ class ViewMatPlotLib(View):
                 norm: Optional[LogNorm] = LogNorm(vmin=vmin, vmax=vmax)
 
             image = self._ax_data[measurement].pcolormesh(
-                time, freq, values,  # Not quite sure why the data is coming in flipped?
-                cmap='Spectral_r',
+                time, freq, values,
+                cmap='Spectral_r' if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
                 norm=norm,
                 shading='auto'
             )

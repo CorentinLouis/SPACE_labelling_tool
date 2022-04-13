@@ -2,13 +2,13 @@ import json
 
 from pathlib import Path
 from typing import List, Dict
-from h5py import File
 
 
-def find_config_for_file(file: File) -> dict:
+def find_config_for_file(columns: List[str]) -> dict:
     """
+    Looks for configurations that match the list of columns in a file.
 
-    :param file: The dict-style input file
+    :param columns: The list of columns in the input file
     """
     # First, we scan the configs directory for entries
     configs: Dict[str, dict] = {}
@@ -20,13 +20,13 @@ def find_config_for_file(file: File) -> dict:
     valid_configs: List[dict] = []
     for config_entry in configs.values():
         # print(config_entry, '\n', set(sav.keys()), '\n', set(config_entry['names'].values()))
-        if not set(file.keys()) - set(config_entry['names'].values()):
+        if not set(columns) - set(config_entry['names'].values()):
             valid_configs.append(config_entry)
 
     if not valid_configs:
         raise KeyError(
             f"No configuration files describe the columns of input file.'.\n"
-            f"Columns are: {', '.join(file.keys())}."
+            f"Columns are: {', '.join(columns)}."
         )
     elif len(valid_configs) > 1:
         raise KeyError(
