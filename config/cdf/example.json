@@ -1,0 +1,16 @@
+{
+  "time": "Variable name",
+  "frequency": "Variable name",
+  "measurements": {
+    "Display Name": {
+      "value": "Variable name for value of this measurement",
+      "background": "Variable name for background for this measurement",
+      "conversion": 999,
+      "units": "Units LaTeX"
+    }
+  },
+  "preprocess": {
+    "frequency_resolution": 999,
+    "time_minimum": 999
+  }
+}

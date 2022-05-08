@@ -168,7 +168,8 @@ class ViewMatPlotLib(View):
                 norm: Optional[LogNorm] = LogNorm(vmin=vmin, vmax=vmax)
 
             image = self._ax_data[measurement].pcolormesh(
-                time, freq, values,
+                # Clip to avoid white spots, transpose as data is time-major not frequency-major
+                time, freq, values.clip(min=1e-31).T if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else values.T,
                 cmap='Spectral_r' if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
                 norm=norm,
                 shading='auto'
@@ -204,10 +205,10 @@ class ViewMatPlotLib(View):
             cb.set_label(
                 "\n".join(
                     textwrap.wrap(
-                        fr"{measurement}"+(fr" (${units[measurement]}$)" if units[measurement] else ""),
+                        fr"{measurement}",
                         width=18
                     )
-                ),
+                ) + ("\n"+fr"(${units[measurement]}$)" if units[measurement] else ""),
                 fontsize=FONT_SIZE
             )
 

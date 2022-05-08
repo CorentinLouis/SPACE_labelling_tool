@@ -27,7 +27,10 @@ space_label.py [-h] [-s SPACECRAFT] FILE DATE DATE
 **Optional arguments:**
 * `-h`, `--help`: Shows help documentation.
 * `-s SPACECRAFT`: The name of the spacecraft. Auto-detected from the input file columns, 
-  but required if multiple spacecraft describe the same input file. Valid options are: cassini, juno.
+  but required if multiple spacecraft describe the same input file.
+* `-f FREQUENCY`: How many log-space frequency bins to rebin the data to. Overrides any default for the spacecraft.
+* `-t TIME_MINIMUM`: How small the minimum time bin should be, in seconds. This must be an even multiple of the current 
+  time bins, e.g. a file with 1s time bins could have a minimum time bin of 15s.
 
 The code will attempt to identify which spacecraft the data file format corresponds to, and read the file intelligently.
 If it can't fit one of them, it will prompt the user to create a new spacecraft configuration file.
@@ -37,14 +40,14 @@ In the case of a file matching multiple spacecraft formats, the user is prompted
 
 Once the file has loaded, it launches a GUI for selecting the measurements within the file to display, 
 and then to navigate the data selected. 
-The plot will display the time range selected, plus a 0.5 day window either side.
+The plot will display the time range selected, plus 1/4 of the previous window.
 
 There are the following interactive components:
 * **Measurements:** Each pane displays a measurement, with name, scale and units on the right. 
   Features can be drawn by clicking to add coordinates, and completed by clicking on the first coordinate added again.
   Once selected, a feature can be named. Features can be selected on any pane, and will be mirrored on all other panes.
 * **Prev/Next buttons:** These move through the data by an amount equal to the width of time range selected. 
-  This will also apply a 0.5 day window of overlap as 'padding'.
+  This will also overlap 1/4 of the current window as 'padding'.
 * **Save button:** This will save any features to TFcat JSON format, as `FILE.json`.
 
 Once finished, you can save and then close the figure using the normal close button.
@@ -60,7 +63,7 @@ Will load the file `cassini_data.hdf5`, and prompt the user to select which meas
 ![Example starting window](docs/images/select-measurements.png)
 
 Once selected, the radio observations will be displayed
-for the time window 10/2/2006 to 11/2/2006, plus some 1/2 day padding either side:
+for the time window 10/2/2006 to 11/2/2006:
 
 ![Example starting window](docs/images/display-measurements.png)
 
@@ -70,6 +73,15 @@ Spacecraft configuration files are stored in the `config/` directory in JSON for
 For more info on how to create a new one, see [spacecraft configurations](docs/spacecraft_configurations.md).
 
 Information on the file formats this program inputs and outputs can be found in the [data dictionary](docs/data_dictionary.md).
+
+## Limitations & Future Work
+
+* The performance of the MatPlotLib-based front-end is poor for high-resolution plots. 
+  Future work would involve re-implementing the front-end in a more modern library like Plotly.
+* The code loads all the data provided into memory at launch. This limits its scalability.
+  Future work would involve re-saving provided data as `parquet` or other time-indexable files for partial loads
+  using the Dask and XArray libraries.
+* Add configurations that load data directly from catalogues.
 
 ## Terminology
 

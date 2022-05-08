@@ -5,15 +5,20 @@ Data sets from satellites.
 import json
 import logging
 from abc import ABC, abstractmethod
-from astropy.time import Time
-from astropy.io.misc.hdf5 import write_table_hdf5
-from h5py import File
-import numpy
-from numpy import ndarray  # Explicit import to make Typing easier
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING, Type
+
+import math
+import numpy
+from astropy.timeseries import TimeSeries, aggregate_downsample
+from astropy.time import Time, TimeDelta
+from astropy import units
+from h5py import File
+from numpy import ndarray  # Explicit import to make Typing easier
+from pandas import DataFrame
 from tfcat.validate import validate_file
 from tqdm import trange
-from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING, Type
+
 
 from spacelabel.models.feature import Feature
 
@@ -21,14 +26,6 @@ if TYPE_CHECKING:
     from spacelabel.presenters import Presenter
 
 log = logging.getLogger(__name__)
-
-
-# The human names of the various measurements.
-MEASUREMENT_NAMES = {
-    'flux_density': "Flux density",
-    'power': "Power",
-    'degree_of_polarization': "Degree of polarization",
-}
 
 
 class DataSet(ABC):
@@ -47,12 +44,26 @@ class DataSet(ABC):
     _log_level: Optional[int] = None  # Passed to Features
     _config: Optional[Dict] = None  # The configuration used
 
-    def __init__(self, file_path: Path, config: Optional[dict] = None, log_level: Optional[int] = None):
+    @staticmethod
+    @abstractmethod
+    def exists_preprocessed(file_path: Path) -> Path:
+        """
+        Does a pre-processed file already exist for this path?
+
+        :raises NotImplementedError: if not implemented for this DataSet
+        :return: The path to the preprocessed file
+        """
+        raise NotImplementedError("A dataset must have the ability to look for pre-processed versions of itself")
+
+    def __init__(self, file_path: Path, config_name: Optional[str] = None, log_level: Optional[int] = None):
         """
         Initializes the dataset. Mostly used to set log level.
 
+        Will do basic loading in, but we don't want to load everything on initialization as the dates proposed may
+        be out of the file range, so defer until we've tested those.
+
         :param file_path: The path to the file
-        :param config: The configuration file to use, if any. Should be handled in subclass
+        :param config_name: The name of the configuration file to use, if any. Should be handled in subclass
         :param log_level: The level of logging to show from this object
         """
         self._file_path = file_path
@@ -68,36 +79,129 @@ class DataSet(ABC):
         """
         Implemented in the specific subtypes, this loads the data from file.
         Deferred load as we only want to part-load e.g. dates for quick validation.
-        """
-        pass
 
-    def rescale_frequency(self, frequency_resolution: int):
+        :raises NotImplementedError: if not implemented for this DataSet
         """
-        Rescales the frequency and all measurements to a single logarithmic range, then saves to an HDF5 file.
+        raise NotImplementedError("A dataset must have deferred loading code")
 
-        :param frequency_resolution: The number of frequency bins to rescale to
+    def preprocess(
+        self,
+        frequency_resolution: Optional[int] = None,
+        time_minimum: Optional[float] = None,
+    ):
         """
-        freq_original = self._freq
-        freq_rescaled = 10 ** (
-            numpy.arange(
-                start=numpy.log10(freq_original[0]),
-                stop=numpy.log10(freq_original[-1]),
-                step=(numpy.log10(max(freq_original)) - numpy.log10(min(freq_original))) / (frequency_resolution - 1),
-                dtype=float
+        Rescales the frequency and/or time, and all measurements depending on them, then saves to an HDF5 file.
+
+        :param frequency_resolution: The number of frequency bins to rescale to (optional, positive).
+        :param time_minimum: The minimum time bin width, in seconds (optional, positive).
+        """
+        if not frequency_resolution:
+            frequency_resolution = self._config['preprocess'].get('frequency_resolution', None)
+        if frequency_resolution:
+            if frequency_resolution < 0:
+                raise ValueError(f"Requested a negative frequency resolution: {frequency_resolution}")
+
+        if not time_minimum:
+            time_minimum = self._config['preprocess'].get('time_minimum', None)
+        if time_minimum:
+            if time_minimum < 0:
+                raise ValueError(f"Requested a negative minimum time bin: {time_minimum}")
+            elif TimeDelta(time_minimum, format='sec') < (self._time[1] - self._time[0]):
+                log.warning("preprocess: The target time bin is smaller than the time bins in the data; skipping.")
+                time_minimum = None
+
+        if frequency_resolution:
+            freq_original: ndarray = self._freq
+            freq_rescaled: ndarray = 10 ** (
+                numpy.arange(
+                    start=numpy.log10(freq_original[0]),
+                    stop=numpy.log10(freq_original[-1]),
+                    step=(
+                        numpy.log10(max(freq_original)) - numpy.log10(min(freq_original))
+                    ) / (frequency_resolution - 1),
+                    dtype=float
+                )
             )
-        )
 
-        log.info(f"rescale_frequency: Preprocessing {len(self._data.keys())} measurements...")
-        for name, measurement_original in self._data.items():
-            # Turn into an array to move into memory, otherwise we do a disk read for each access...
-            self._data[name] = numpy.zeros(
-                (len(self._freq), len(self._time)), dtype=float
+            # ====== THIS ISN'T DEPRECATED CODE! THIS IS THE EXAMPLE I WAS WORKING FROM ======
+            # f_new = 10 ** (np.arange(np.log10(frequency[0]), np.log10(frequency[-1]),
+            #                          (np.log10(max(frequency)) - np.log10(min(frequency))) / 399, dtype=float))
+            # data_new = np.zeros((f_new.size, len(time)), dtype=float)
+            # for i in range(len(time)):
+            #     data_new[:, i] = np.interp(f_new, frequency, data[:, i])
+            # ================================================================================
+
+            log.info(
+                f"preprocessing: Rebinning frequency of {len(self._data.keys())} "
+                f"measurements to {frequency_resolution} bins..."
             )
-            # This absolutely can be done more efficiently
-            for i in trange(len(self._time)):
-                self._data[name][:, i] = numpy.interp(self._freq, freq_original, measurement_original[:, i])
+            for name, measurement_original in self._data.items():
+                # Turn into an array to move into memory, otherwise we do a disk read for each access...
+                measurement_new = numpy.zeros(
+                    (
+                        len(self._time),
+                        len(freq_rescaled)
+                    ), dtype=float
+                )
 
-        self.save_to_hdf()
+                for i in trange(len(self._time)):
+                    measurement_new[i, :] = numpy.interp(
+                        x=freq_rescaled,
+                        xp=freq_original,
+                        fp=measurement_original[i, :]
+                    )
+                    self._data[name] = measurement_new
+
+            self._freq = freq_rescaled
+
+        if time_minimum:
+            # If we're rescaling the time resolution, do that.
+            log.info(
+                f"preprocessing: Downsampling time bin width of {len(self._data.keys())} "
+                f"measurements to {time_minimum} seconds... this might take a while!"
+            )
+
+            time_original: Time = self._time
+
+            time_old_steps_per_new = round(
+                ((time_minimum * units.s) / (time_original[1] - time_original[0]).to(units.s)).value
+            )
+
+            time_rescaled: Time = TimeSeries(
+                time_start=time_original[0],
+                time_delta=time_minimum * units.s,
+                n_samples=math.ceil(len(time_original) / time_old_steps_per_new)
+            ).time
+
+            for name, measurement_original in self._data.items():
+                log.info(
+                    f"preprocessing: Downsampling time of {len(self._data.keys())} "
+                    f"by a factor of 1/{time_old_steps_per_new}"
+                )
+                measurement_new = numpy.zeros(
+                    (
+                        len(time_rescaled),
+                        len(self._freq)
+                    )
+                )
+
+                # There's absolutely better ways to do this but this was fast to write and is surprisingly OK.
+                for step in trange(len(measurement_new)-1):
+                    measurement_new[step, :] = numpy.nanmean(
+                        measurement_original[step*time_old_steps_per_new:(step+1)*time_old_steps_per_new, :],
+                        axis=0
+                    )
+                # There might be an uneven length final bin so just mean that
+                measurement_new[step+1] = numpy.nanmean(
+                    measurement_original[(step+1)*time_old_steps_per_new:, :],
+                    axis=0
+                )
+                self._data[name] = measurement_new
+
+                self._time = time_rescaled
+
+        if time_minimum or frequency_resolution:
+            self.save_to_hdf()
 
     def save_to_hdf(self):
         """
@@ -107,7 +211,6 @@ class DataSet(ABC):
             self._file_path.with_suffix('.preprocessed.hdf5'), 'w'
         )
         output_file.attrs.create('observer', self._observer)
-        output_file.attrs.create('years', self._config['years'])
 
         # Has to be done differently as this is an Astropy quantity
         output_file.create_dataset('Time', data=numpy.array(self._time.jd1+self._time.jd2))
@@ -117,7 +220,7 @@ class DataSet(ABC):
         output_file['Frequency'].attrs.create('units',  self._units['Frequency'])
 
         for key, value in self._data.items():
-            output_file.create_dataset(key, data=value)
+            output_file.create_dataset(key, data=value, compression='lzf')
             output_file[key].attrs['units'] = self._units[key]
 
         output_file.close()
@@ -142,7 +245,8 @@ class DataSet(ABC):
         """
         if dates[0] < self._time[0] or dates[1] > self._time[-1]:
             raise ValueError(
-                f"Date range {dates[0]}-{dates[1]} is outside of the data file range {self._time[0]}-{self._time[1]}.\n"
+                f"Date range {dates[0]} to {dates[-1]} is outside of the data file range "
+                f"{self._time[0].to_datetime()} to {self._time[1].to_datetime()}.\n"
                 f"Please check your date range is YYYY-MM-DD format."
             )
 
@@ -171,7 +275,7 @@ class DataSet(ABC):
         keys: List[str] = measurements if measurements else self._data.keys()
 
         for key in keys:
-            data[key] = self._data[key][:, time_mask]
+            data[key] = self._data[key][time_mask, :]
 
         return self._time[time_mask], self._freq, data
 

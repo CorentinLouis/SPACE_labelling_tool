@@ -30,11 +30,19 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '-s', type=str, nargs=1, dest='config', metavar="SPACECRAFT",
+        '-s', type=str, nargs=1, dest='config', metavar="SPACECRAFT", default=None,
         help="The name of the spacecraft. Auto-detected from the input file columns, "
-             "but required if multiple spacecraft describe the same input file. Valid options are: {}.".format(
-                ', '.join([str(config_file.stem) for config_file in (Path(__file__).parent / 'config').iterdir()])
-             )
+             "but required if multiple spacecraft describe the same input file."
+    )
+    parser.add_argument(
+        '-f', type=str, nargs=1, dest='frequency_resolution', metavar="FREQUENCY_RESOLUTION", default=None,
+        help="The number of frequency bins in log space to rebin the data to. "
+             "To override a spacecraft default with 'Do not rebin', set to 0."
+    )
+    parser.add_argument(
+        '-t', type=str, nargs=1, dest='time_minimum', metavar="TIME_MINIMUM", default=None,
+        help="The minimum width of time bin, in seconds, to rebin the data to. "
+             "To override a spacecraft default with 'Do not rebin', set to 0."
     )
     arguments = parser.parse_args()
 
@@ -48,26 +56,6 @@ if __name__ == '__main__':
         )
     elif not input_file.exists():
         raise FileNotFoundError(f"File '{input_file}' does not exist")
-
-    # ==================== SATELLITE CONFIGURATION ====================
-    if arguments.config:
-        # The user has specified a configuration. First, we scan the configs directory for entries.
-        configs: Dict[str, dict] = {}
-        for config_file in (Path(__file__).parent / 'config').glob('*.json'):
-            configs[config_file.stem] = json.load(config_file.open())
-
-        # If we've been provided a configuration option, and it's in our list of configs, use it,
-        # otherwise report that it's wrong to the user
-        if arguments.config in configs.keys():
-            config = arguments.config
-        else:
-            raise FileNotFoundError(
-                f"Spacecraft '{arguments.config}' is not one of the available configurations.\n"
-                f"Options are: {','.join(configs.keys())}."
-            )
-    else:
-        # Let the code decide the config itself.
-        config = None
 
     # ==================== DATE RANGE ====================
     # Validate the date range provided against the data in the file.
@@ -84,11 +72,15 @@ if __name__ == '__main__':
 
     # Set up the MVP and go!
     dataset: DataSet = load_dataset(
-        file_path=input_file, config=config,
+        file_path=input_file, config=arguments.config,
         log_level=logging.DEBUG
     )
     dataset.validate_dates((date_start, date_end))
     dataset.load()  # Load the dataset if the dates are valid
+    dataset.preprocess(
+        frequency_resolution=arguments.frequency_resolution,
+        time_minimum=arguments.time_minimum
+    )
 
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)
     presenter: Presenter = Presenter(dataset, view, log_level=logging.INFO)
