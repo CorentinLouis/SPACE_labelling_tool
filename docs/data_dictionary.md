@@ -22,6 +22,22 @@ Some files will contain additional measurements as columns, for example:
 The code can cope with any number of additional 2-d measurement columns, but they must be defined in the 
 [spacecraft configurations](spacecraft_configurations.md) file.
 
+## `.cdf` File Collections
+
+Valid `.cdf` file collections are directories containing files with names in the format 
+`stuff_[...]_stuff_YYYYMMDD_[???].cdf`. 
+The code will read the data from all files matching apart from the date, 
+and combine them into a single pre-processed data file that is saved in HDF5 format.
+
+CDF files must contain the following variables:
+
+* **`Epoch` (integer, 1D):** The time of each observation. This is recorded as unix epoch.
+* **`Frequency` (float, 1D):** The frequency of radio observation, in any frequency unit.
+* **`Data` (float, 2D):** The calibrated flux density, in  V^2 m^-2 (Freq)^-1. This is converted into per Watt.
+
+And the following global attributes:
+* **`Mission_group` (string):** The name of the mission (e.g. Juno). 
+
 # Outputs
 
 ## TFcat `.json` Files
