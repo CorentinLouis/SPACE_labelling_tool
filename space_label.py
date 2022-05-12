@@ -78,8 +78,8 @@ if __name__ == '__main__':
     dataset.validate_dates((date_start, date_end))
     dataset.load()  # Load the dataset if the dates are valid
     dataset.preprocess(
-        frequency_resolution=arguments.frequency_resolution[0],
-        time_minimum=arguments.time_minimum[0]
+        frequency_resolution=(arguments.frequency_resolution[0] if arguments.frequency_resolution else None),
+        time_minimum=(arguments.time_minimum[0] if arguments.time_minimum else None)
     )
 
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)
