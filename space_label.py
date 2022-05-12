@@ -35,12 +35,12 @@ if __name__ == '__main__':
              "but required if multiple spacecraft describe the same input file."
     )
     parser.add_argument(
-        '-f', type=str, nargs=1, dest='frequency_resolution', metavar="FREQUENCY_RESOLUTION", default=None,
+        '-f', type=int, nargs=1, dest='frequency_resolution', metavar="FREQUENCY_RESOLUTION", default=None,
         help="The number of frequency bins in log space to rebin the data to. "
              "To override a spacecraft default with 'Do not rebin', set to 0."
     )
     parser.add_argument(
-        '-t', type=str, nargs=1, dest='time_minimum', metavar="TIME_MINIMUM", default=None,
+        '-t', type=int, nargs=1, dest='time_minimum', metavar="TIME_MINIMUM", default=None,
         help="The minimum width of time bin, in seconds, to rebin the data to. "
              "To override a spacecraft default with 'Do not rebin', set to 0."
     )
@@ -78,8 +78,8 @@ if __name__ == '__main__':
     dataset.validate_dates((date_start, date_end))
     dataset.load()  # Load the dataset if the dates are valid
     dataset.preprocess(
-        frequency_resolution=arguments.frequency_resolution,
-        time_minimum=arguments.time_minimum
+        frequency_resolution=arguments.frequency_resolution[0],
+        time_minimum=arguments.time_minimum[0]
     )
 
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)
