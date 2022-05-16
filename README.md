@@ -44,7 +44,11 @@ The plot will display the time range selected, plus 1/4 of the previous window.
 
 There are the following interactive components:
 * **Measurements:** Each pane displays a measurement, with name, scale and units on the right. 
-  Features can be drawn by clicking to add coordinates, and completed by clicking on the first coordinate added again.
+  Features can be drawn by clicking to add coordinates, and completed by clicking on the first coordinate added again. The vertices of the polygon can be modified before completed the polygon:
+  * Hold _ctrl_ and click and drag a vertex to reposition it before the polygon has been completed.
+  * Hold the _shift_ key and click and drag anywhere in the axes to move all vertices.
+  * Press the _esc_ key to start a new polygon.
+
   Once selected, a feature can be named. Features can be selected on any pane, and will be mirrored on all other panes.
 * **Prev/Next buttons:** These move through the data by an amount equal to the width of time range selected. 
   This will also overlap 1/4 of the current window as 'padding'.
