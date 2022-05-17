@@ -5,6 +5,8 @@ import numpy
 from astropy.time import Time
 from numpy import ndarray
 from shapely.geometry import LinearRing
+from shapely.geometry import Polygon,box
+
 from typing import List, Tuple, Optional
 
 log = logging.getLogger(__name__)
@@ -18,6 +20,7 @@ class Feature:
     _time: Time = None
     _freq: ndarray = None
     _id: int = None
+#    _ax_data: Dict[str, Axes] = None
 
     def __init__(
             self, name: str,
@@ -41,6 +44,21 @@ class Feature:
         if log_level:
             log.setLevel(log_level)
 
+    def crop(self,bbox:Tuple):
+        """
+        Crops the feature to have the vertexes inside the plotting window
+        """
+        coordinates = [
+            (time.unix, freq) for time, freq in zip(self._time, self._freq)
+        ]
+        polygon = Polygon(coordinates)
+        polygon = polygon.intersection(box(bbox[0].unix,bbox[1],bbox[2].unix,bbox[3]))
+
+        self._time = Time(polygon.exterior.xy[0],format="unix")
+        self._freq = polygon.exterior.xy[1]
+
+
+
     def to_text_summary(self) -> str:
         """
         Writes a summary of the feature's extent to text.
@@ -49,16 +67,21 @@ class Feature:
         """
         return f"{self._name}, {min(self._time)}, {max(self._time)}, {min(self._freq)}, {max(self._freq)}"
 
-    def to_tfcat_dict(self) -> dict:
+    def to_tfcat_dict(self, bbox=None) -> dict:
         """
         Expresses the polygon in the form of a dictionary containing a TFCat feature.
 
         :return: A dictionary. Times are returned as Unix time, not calendar time
         """
+
+        if bbox is not None:
+            self.crop(bbox)
+
         coordinates = [
             (time.unix, freq) for time, freq in zip(self._time, self._freq)
         ]
 
+       
 
         # TFcat format is counter-clockwise, so invert if our co-ordinates are not
         if not LinearRing(coordinates).is_ccw:

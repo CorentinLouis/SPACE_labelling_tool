@@ -175,7 +175,7 @@ class ViewMatPlotLib(View):
                 shading='auto'
             )
             self._ax_data[measurement].set_xlim(time[0], time[-1])
-            self._ax_data[measurement].set_ylim(freq[0], freq[-1])
+            self._ax_data[measurement].set_ylim(freq[0]-0.1*freq[0], freq[-1]+0.1*freq[-1]) # Frequency limits enlarge, to be able to draw polygon on the edge of the plotting window
             self._ax_data[measurement].set_yscale('log')
 
             # Formatting Axes
@@ -303,7 +303,7 @@ class ViewMatPlotLib(View):
             vertexes_jd_format: List[Tuple[Time, float]] = [
                 (
                     Time(num2julian(vertex[0]), format='jd'),
-                    vertex[1]
+                    vertex[1] 
                 ) for vertex in vertexes
             ]
             feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name)

@@ -319,6 +319,21 @@ class DataSet(ABC):
         """
         return self._time[0], self._time[-1]
 
+
+    def get_frequency_range(self) -> Tuple[float, float]:
+        """
+        Returns the min and max of the frequency range
+        """
+        return numpy.min(self._freq), numpy.max(self._freq)
+
+    def get_bbox(self) -> Tuple[Time, float, Time, float]:
+        """
+        Returns the time and frequency limits of the plotting window
+        """
+        times = self.get_time_range()
+        freqs = self.get_frequency_range()
+        return times[0], freqs[0], times[1], freqs[1]
+
     def write_features_to_text(self):
         """
         Writes a summary of the bounds of the features that have been selected, to text file.
@@ -327,16 +342,18 @@ class DataSet(ABC):
             for feature in self._features:
                 file_text.write(f'{feature.to_text_summary()}\n')
 
+    
     def write_features_to_json(self):
         """
         Writes the details of the bounds of each feature, to a TFCat-format JSON file.
         """
+        bbox = self.get_bbox()
         with open(self._file_path.with_suffix('.json'), 'w') as file_json:
             json.dump(
                 {
                     "type": "FeatureCollection",
                     "features": [
-                        feature.to_tfcat_dict() for feature in self._features
+                        feature.to_tfcat_dict(bbox=bbox) for feature in self._features
                     ],
                     "crs": {
                         "type": "Cartesian",
