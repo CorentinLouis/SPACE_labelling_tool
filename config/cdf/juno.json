@@ -11,6 +11,6 @@
   },
   "preprocess": {
     "frequency_resolution": 200,
-    "time_minimum": 15
+    "time_minimum": 60
   }
 }
