@@ -5,3 +5,4 @@ cenv/
 *.ipynb-checkpoint
 *.sav
 *.egg-info
+.DS_Store
