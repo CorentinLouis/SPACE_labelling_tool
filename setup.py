@@ -7,11 +7,11 @@ setup(
     author='Aaron Empey',
     maintainer='Corentin Louis',
     maintainer_email='corentin.louis@dias.ie',
-    data_files=[
-        ('config', ['config/*.json'])
-    ],
+#    data_files=[
+#        ('config', ['config/*.json'])
+#    ],
     packages=['spacelabel'],
-    scripts=['space_label.py'],
+    scripts=['spacelabel/spacelabel'],
     install_requires=[
         'wheel',
         'scipy',
