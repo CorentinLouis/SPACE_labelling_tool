@@ -15,7 +15,7 @@ Installing in editable mode will allow the scripts to read any new or modified v
 ## Usage
 
 ```shell
-space_label.py [-h] [-s SPACECRAFT] FILE DATE DATE
+python spacelabel [-h] [-s SPACECRAFT] FILE DATE DATE
 ```
 
 **Positional arguments:**
