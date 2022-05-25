@@ -46,7 +46,7 @@ class DataSetCDF(DataSet):
             configs[config_file.stem] = json.load(config_file.open())
 
         if config_name:
-            # If there was a config requested, vet it!
+            # If there was a config requested, get it!
             if config_name not in configs.keys():
                 raise KeyError(
                     f"Requested a non-existent configuration '{config_name}'. "
