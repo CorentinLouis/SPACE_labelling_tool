@@ -6,3 +6,4 @@ cenv/
 *.sav
 *.egg-info
 .DS_Store
+.venv
