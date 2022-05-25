@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 class Feature:
     """
-    A named 'feature' from the observational data, which is described by a polygon on the time-flux plane.
+    A named 'feature' from the observational data, which is described by a polygon on the time-frequency plane.
     """
     _name: str = None
     _time: Time = None
@@ -32,7 +32,7 @@ class Feature:
         Initialize the feature.
 
         :param name: The name of the feature
-        :param vertexes: The time-flux pairs of the vertexes defining it
+        :param vertexes: The time-frequency pairs of the vertexes defining it
         :param feature_id: The internal ID number for the feature
         :param log_level: The level of logging to show. Inherited from DataSet
         """
@@ -58,12 +58,11 @@ class Feature:
         self._freq = polygon.exterior.xy[1]
 
 
-
     def to_text_summary(self) -> str:
         """
         Writes a summary of the feature's extent to text.
 
-        :return: A string containing the feature name, and its maximum and minimum bounds in the time-flux plane
+        :return: A string containing the feature name, and its maximum and minimum bounds in the time-frequency plane
         """
         return f"{self._name}, {min(self._time)}, {max(self._time)}, {min(self._freq)}, {max(self._freq)}"
 
