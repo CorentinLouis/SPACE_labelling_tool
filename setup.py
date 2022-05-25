@@ -13,6 +13,7 @@ setup(
     packages=['spacelabel'],
     scripts=['space_label.py'],
     install_requires=[
+        'wheel',
         'scipy',
         'numpy',
         'matplotlib',
