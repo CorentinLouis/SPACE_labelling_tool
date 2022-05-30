@@ -72,7 +72,8 @@ if __name__ == '__main__':
 
     # Set up the MVP and go!
     dataset: DataSet = load_dataset(
-        file_path=input_file, config=arguments.config,
+        file_path=input_file,
+        config_name=arguments.config,
         log_level=logging.DEBUG
     )
     dataset.validate_dates((date_start, date_end))
