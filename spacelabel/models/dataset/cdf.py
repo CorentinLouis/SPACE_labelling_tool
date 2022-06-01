@@ -136,11 +136,17 @@ class DataSetCDF(DataSet):
         for cdf_path in tqdm(cdf_paths):
             file: CDF = CDF(str(cdf_path))
             epochs.append(file[self._config['time']])
-
+        
+        cdf_time_format = CDF(str(cdf_paths[0])).varinq(self._config['time'])['Data_Type_Description']
+        
+        if cdf_time_format == 'CDF_TIME_TT2000':
+            cdf_time_format = 'CDF_TT2000'
+        
         self._time = Time(
-            numpy.concatenate(epochs), format='cdf_tt2000'
-        )
+            numpy.concatenate(epochs), 
+            format = cdf_time_format.lower())
 
+        
         self._time.format = 'jd'
         self._units['Time'] = "JD"
 

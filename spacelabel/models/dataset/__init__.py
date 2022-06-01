@@ -162,21 +162,20 @@ class DataSet(ABC):
             )
 
             time_original: Time = self._time
-
-            time_old_steps_per_new = round(
-                ((time_minimum * units.s) / (time_original[1] - time_original[0]).to(units.s)).value
-            )
-
+            
+            
+            
             time_rescaled: Time = TimeSeries(
                 time_start=time_original[0],
                 time_delta=time_minimum * units.s,
-                n_samples=math.ceil(len(time_original) / time_old_steps_per_new)
+                n_samples=math.ceil((time_original[-1] - time_original[0]).to(units.s).value/time_minimum)
             ).time
+
 
             for name, measurement_original in self._data.items():
                 log.info(
                     f"preprocessing: Downsampling time of {len(self._data.keys())} "
-                    f"by a factor of 1/{time_old_steps_per_new}"
+                    f"by a factor of 1/{(time_minimum)/(time_original[1]-time_original[0]).to(units.s)}"
                 )
                 measurement_new = numpy.zeros(
                     (
@@ -184,18 +183,13 @@ class DataSet(ABC):
                         len(self._freq)
                     )
                 )
-
-                # There's absolutely better ways to do this but this was fast to write and is surprisingly OK.
-                for step in trange(len(measurement_new)-1):
-                    measurement_new[step, :] = numpy.nanmean(
-                        measurement_original[step*time_old_steps_per_new:(step+1)*time_old_steps_per_new, :],
-                        axis=0
-                    )
-                # There might be an uneven length final bin so just mean that
-                measurement_new[step+1] = numpy.nanmean(
-                    measurement_original[(step+1)*time_old_steps_per_new:, :],
-                    axis=0
-                )
+                
+                
+                for i in range(0, len(self._freq)):
+                    measurement_new[:, i] = numpy.interp(
+                        time_rescaled.value, time_original.value, measurement_original[:, i]
+                        )
+                        
                 self._data[name] = measurement_new
 
                 self._time = time_rescaled
