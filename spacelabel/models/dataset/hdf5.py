@@ -66,16 +66,16 @@ class DataSetHDF5(DataSet):
         else:
             # We iterate over each of the possible configurations.
             # Once we find one (and only one) that fully describes the input file, we accept it as the configuration.
-            valid_configs: List[dict] = []
+            valid_configs: Dict[str, Dict] = {}
 
-            for config_entry in configs.values():
+            for config_name, config_entry in configs.items():
                 # Let's check the required columns from the config - do they all exist in the file?
                 config_columns = [config_entry['time']['value'], config_entry['frequency']['value']]
                 for measurement in config_entry['measurements'].values():
                     config_columns.append(measurement['value'])
 
                 if not set(config_columns) - set(columns):
-                    valid_configs.append(config_entry)
+                    valid_configs[config_name] = config_entry
 
             if not valid_configs:
                 raise KeyError(
@@ -89,7 +89,8 @@ class DataSetHDF5(DataSet):
                     f"{', '.join([config_name for config_name in valid_configs.keys()])}."
                 )
             else:
-                return valid_configs[0]
+                # Take only the 'value' part as it pops as key:value
+                return valid_configs.popitem()[1]
 
     def __init__(
             self,

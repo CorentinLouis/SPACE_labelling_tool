@@ -12,6 +12,13 @@
     "Flux density": {
       "value": "s",
       "units": "Wm^{-2}Hz^{-1}"
+    },
+    "Power": {
+      "value": "p",
+      "units": "W/sr"
+    },
+    "Degree of polarization": {
+      "value": "v"
     }
   },
   "preprocess": {
