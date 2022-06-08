@@ -1,4 +1,5 @@
 from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name='SPACE Labelling',
@@ -7,7 +8,8 @@ setup(
     author='Aaron Empey',
     maintainer='Corentin Louis',
     maintainer_email='corentin.louis@dias.ie',
-    packages=['spacelabel'],
+    packages=find_packages(),
+    include_package_data=True,
     scripts=['spacelabel/spacelabel'],
     install_requires=[
         'wheel',
