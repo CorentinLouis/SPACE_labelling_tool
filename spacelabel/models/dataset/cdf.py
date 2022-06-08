@@ -61,7 +61,7 @@ class DataSetCDF(DataSet):
                 if measurement.get('background', None):
                     config_columns.append(measurement['background'])
 
-            if set(config_columns) - set(columns):
+            if not set(config_columns).intersection(set(columns)):
                 raise KeyError(
                     f"Requested configuration '{config_name}' does not describe the input file. "
                     f"Configuration file requires columns {', '.join(config_columns)}, "
@@ -83,9 +83,10 @@ class DataSetCDF(DataSet):
                     if measurement.get('background', None):
                         config_columns.append(measurement['background'])
 
-                if not set(config_columns) - set(columns):
+                if set(config_columns).intersection(set(columns)):
                     valid_configs.append(config_entry)
-
+            print("####### valid config is: ##########")
+            print(valid_configs)
             if not valid_configs:
                 raise KeyError(
                     f"No configuration files describe the columns of input file. "
