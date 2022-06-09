@@ -22,6 +22,7 @@ class Presenter:
     _view: ViewMatPlotLib = None
     _time_start: Time = None
     _time_end: Time = None
+    _frac_dyn_range: Dict[float, float] = None
     _measurements: Optional[List[str]] = None
 
     def __init__(
@@ -98,6 +99,7 @@ class Presenter:
         log.debug("request_data_time_range: Started...")
         self._time_start = time_start
         self._time_end = time_end
+        self._frac_dyn_range = frac_dyn_range
 
         time, flux, data = self._dataset.get_data_for_time_range(
             time_start, time_end, measurements=self._measurements
@@ -123,7 +125,8 @@ class Presenter:
 
         self.request_data_time_range(
             time_start=self._time_start + time_window * (1.0 - overlap_fraction),
-            time_end=self._time_end + time_window * (1.0 - overlap_fraction)
+            time_end=self._time_end + time_window * (1.0 - overlap_fraction),
+            frac_dyn_range=self._frac_dyn_range
         )
         log.debug("request_data_next: Complete")
 
@@ -137,6 +140,7 @@ class Presenter:
 
         self.request_data_time_range(
             time_start=self._time_start - time_window * (1.0 - overlap_fraction),
-            time_end=self._time_end - time_window * (1.0 - overlap_fraction)
+            time_end=self._time_end - time_window * (1.0 - overlap_fraction),
+            frac_dyn_range=self._frac_dyn_range
         )
         log.debug("request_data_prev: Complete")
