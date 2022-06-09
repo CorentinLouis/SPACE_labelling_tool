@@ -143,7 +143,7 @@ class ViewMatPlotLib(View):
         )
 
     def draw_data(
-            self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
+            self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str], frac_dyn_range: Dict[float,float],
             features: Optional[List[Feature]]
     ):
         """
@@ -163,8 +163,8 @@ class ViewMatPlotLib(View):
             if not SHOULD_MEASUREMENT_BE_LOG.get(measurement, True):
                 norm: Optional[LogNorm] = None
             else:
-                vmin: float = numpy.quantile(values[values > 0.], 0.05)
-                vmax: float = numpy.quantile(values[values > 0.], 0.95)
+                vmin: float = numpy.quantile(values[values > 0.], frac_dyn_range[0])
+                vmax: float = numpy.quantile(values[values > 0.], frac_dyn_range[-1])
                 norm: Optional[LogNorm] = LogNorm(vmin=vmin, vmax=vmax)
 
             image = self._ax_data[measurement].pcolormesh(

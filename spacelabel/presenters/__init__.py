@@ -3,7 +3,7 @@ import logging
 from astropy.time import Time, TimeDelta
 from datetime import datetime, timedelta
 from numpy import datetime64
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 from spacelabel.models.dataset import DataSet
 from spacelabel.models.feature import Feature
@@ -84,6 +84,7 @@ class Presenter:
             self,
             time_start: Time,
             time_end: Time,
+            frac_dyn_range: Dict[float, float],
             overlap_fraction: float = OVERLAP_FRACTION
     ):
         """
@@ -107,6 +108,7 @@ class Presenter:
 
         self._view.draw_data(
             time, flux, data, self._dataset.get_units(),
+            frac_dyn_range=frac_dyn_range,
             features=features
         )
         log.debug(f"request_data_time_range: Complete")

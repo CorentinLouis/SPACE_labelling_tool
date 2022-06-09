@@ -44,6 +44,10 @@ if __name__ == '__main__':
         help="The minimum width of time bin, in seconds, to rebin the data to. "
              "To override a spacecraft default with 'Do not rebin', set to 0."
     )
+    parser.add_argument(
+        '-frac_dyn_range', type=float, nargs=2, dest='frac_dyn_range', metavar="FRAC_DYN_RANGE", default=[0.05, 0.95],
+        help="The minimum and maximum fraction of the flux to be display in the dynamic range"
+    )
     arguments = parser.parse_args()
 
     # ==================== INPUT FILE ====================
@@ -86,5 +90,5 @@ if __name__ == '__main__':
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)
     presenter: Presenter = Presenter(dataset, view, log_level=logging.INFO)
     presenter.request_measurements()
-    presenter.request_data_time_range(time_start=date_start, time_end=date_end)
+    presenter.request_data_time_range(time_start=date_start, time_end=date_end, frac_dyn_range=arguments.frac_dyn_range)
     presenter.run()
