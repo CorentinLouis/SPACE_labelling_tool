@@ -10,7 +10,7 @@
     }
   },
   "preprocess": {
-    "frequency_resolution": 200,
-    "time_minimum": 60
+    "frequency_resolution": 230,
+    "time_minimum": 15
   }
 }
