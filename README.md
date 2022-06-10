@@ -52,7 +52,7 @@ There are the following interactive components:
   Once selected, a feature can be named. Features can be selected on any pane, and will be mirrored on all other panes.
 * **Prev/Next buttons:** These move through the data by an amount equal to the width of time range selected. 
   This will also overlap 1/4 of the current window as 'padding'.
-* **Save button:** This will save any features to TFcat JSON format, as `FILE.json`.
+* **Save button:** This will save any features to TFcat JSON format, as `catalogue_{OBSERVER_NAME}.json`.
 
 Once finished, you can save and then close the figure using the normal close button.
 

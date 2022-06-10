@@ -160,6 +160,7 @@ class DataSetCDF(DataSet):
         """
         Reads a datafile in CDF format.
         """
+        super().load()
 
         log.info(f"DataSetCDF: Loading '{self._file_path}[*].cdf...")
 

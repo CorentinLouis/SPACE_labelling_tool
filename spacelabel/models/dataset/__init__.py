@@ -72,17 +72,15 @@ class DataSet(ABC):
             log.setLevel(log_level)
             self._log_level = log_level
 
-        self.load_features_from_json()
-
-    @abstractmethod
     def load(self):
         """
         Implemented in the specific subtypes, this loads the data from file.
-        Deferred load as we only want to part-load e.g. dates for quick validation.
 
-        :raises NotImplementedError: if not implemented for this DataSet
+        Deferred load as we only want to part-load e.g. dates for quick validation.
+        We load the features from JSON in this section, as the configuration is now available.
+
         """
-        raise NotImplementedError("A dataset must have deferred loading code")
+        self.load_features_from_json()
 
     def preprocess(
         self,
@@ -343,7 +341,9 @@ class DataSet(ABC):
         Writes the details of the bounds of each feature, to a TFCat-format JSON file.
         """
         bbox = self.get_bbox()
-        with open(self._file_path.with_suffix('.json'), 'w') as file_json:
+        path_tfcat: Path = self._file_path.parent / f'catalogue_{self._observer}.json'
+
+        with open(path_tfcat, 'w') as file_json:
             json.dump(
                 {
                     "type": "FeatureCollection",
@@ -372,20 +372,20 @@ class DataSet(ABC):
                 file_json
             )
         log.info(
-            f"write_features_to_json: Writing '{self._file_path.with_suffix('.json')}'"
+            f"write_features_to_json: Writing '{path_tfcat}'"
         )
 
     def load_features_from_json(self):
         """
         Loads the features for this datafile from a JSON file.
         """
-        path_tfcat: Path = self._file_path.with_suffix('.json')
+        path_tfcat: Path = self._file_path.parent / f'catalogue_{self._observer}.json'
 
         if not path_tfcat.exists():
             log.info("load_features_from_json: No existing JSON file")
         else:
             log.info(
-                f"load_features_from_json: Loading '{self._file_path.with_suffix('.json')}'"
+                f"load_features_from_json: Loading '{path_tfcat}'"
             )
             validate_file(path_tfcat)
 
