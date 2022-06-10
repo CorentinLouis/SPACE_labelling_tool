@@ -123,11 +123,13 @@ class DataSetHDF5(DataSet):
         self._freq = numpy.array(file[self._config['frequency']['value']])
         self._units['Frequency'] = self._config['frequency']['units']
 
+        self._observer = self._config['observer']
+
     def load(self):
         """
         Reads a datafile in HDF5 format using the config file set earlier.
         """
-        self._observer = self._config['observer']
+        super().load()
 
         log.info(f"DataSetHDF5: Loading '{self._file_path.with_suffix('.hdf5')}...")
         file: File = File(self._file_path.with_suffix('.hdf5'))

@@ -43,20 +43,21 @@ class DataSetPreprocessed(DataSet):
 
         file: File = File(file_path)
         self._time = Time(file['Time'], format='jd')
+        self._observer = file.attrs['observer']
 
         if log_level:
             log.setLevel(log_level)
 
     def load(self):
         """
-        Similar to the deferred load from above, but takes into account the
+        Similar to the deferred load from HDF5, but uses configuration as loaded from file.
         """
+        super().load()
+
         log.info(f"DataSetPreprocessed: Loading '{self._file_path}.preprocessed.hdf5'...")
         file: File = File(self._file_path.with_suffix('.preprocessed.hdf5'))
 
         names: List[str] = list(file.keys())
-
-        self._observer = file.attrs['observer']
 
         names.remove('Frequency')
         self._freq = numpy.array(file['Frequency'])
