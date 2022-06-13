@@ -181,14 +181,14 @@ class DataSet(ABC):
                         len(self._freq)
                     )
                 )
-                
-                
+
+
 #                for i in range(0, len(self._freq)):
                 for i in trange(len(self._freq)):
                     measurement_new[:, i] = numpy.interp(
                         time_rescaled.value, time_original.value, measurement_original[:, i]
                         )
-                        
+
                 self._data[name] = measurement_new
 
                 self._time = time_rescaled
@@ -351,21 +351,15 @@ class DataSet(ABC):
                         feature.to_tfcat_dict(bbox=bbox) for feature in self._features
                     ],
                     "crs": {
-                        "type": "Cartesian",
-                        "name": "Time-Frequency",
+                        "type": "local",
                         "properties": {
-                            "type": "Cartesian",
                             "name": "Time-Frequency",
-                            "time_coords": {
-                                "id": "unix",  "name":  "Timestamp (Unix Time)", "unit": "s",
-                                "time_origin": "1970-01-01T00:00:00.000Z",
-                                "time_scale": "TT"
-                            },
+                            "time_coords_id": "unix",
                             "spectral_coords": {
-                                "name": "Frequency",
+                                "type": "frequency",
                                 "unit": self._units['Frequency']
                             },
-                            "ref_position": {"id": self._observer}
+                            "ref_position_id": self._observer
                         }
                     }
                 },
