@@ -4,7 +4,6 @@ cdflib>=0.4.4
 Cython
 cycler>=0.11.0
 easygui>=0.98.2
-ffnet>=0.8.4
 h5py>=3.6.0
 importlib-resources>=5.4.0
 jsonschema>=4.2.1
@@ -17,6 +16,7 @@ pandas>=1.3.4
 Pillow>=8.4.0
 pyerfa>=2.0.0.1
 pyparsing>=3.0.4
+PyQt5==5.15.6
 pyreadstat>=1.1.3
 pyrsistent>=0.18.0
 python-dateutil>=2.8.2
