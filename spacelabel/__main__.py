@@ -15,7 +15,7 @@ from spacelabel.views.matplotlib import ViewMatPlotLib
 from spacelabel.presenters import Presenter
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description="Read and process spacecraft radio data files in IDL .sav format."
     )
@@ -92,3 +92,7 @@ if __name__ == '__main__':
     presenter.request_measurements()
     presenter.request_data_time_range(time_start=date_start, time_end=date_end, frac_dyn_range=arguments.frac_dyn_range)
     presenter.run()
+
+
+if __name__ == '__main__':
+   main()
