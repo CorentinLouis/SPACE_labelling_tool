@@ -49,8 +49,8 @@ def main():
         help="The minimum and maximum fraction of the flux to be display in the dynamic range"
     )
     parser.add_argument(
-        '-verbose', type=bool, nargs=1, dest='verbose', metavar="VERBOSE", default=True,
-        help="If the value is True, the debug log will be printed."
+        '--not_verbose', dest='not_verbose', action='store_false', #metavar="VERBOSE",
+        help="If not_verbose is called, the debug log will not be printed. By default: verbose mode"
     )
     arguments = parser.parse_args()
 
@@ -75,8 +75,8 @@ def main():
             f"Date range {arguments.date_range} is not in ISO date format.\n"
             f"Please provide the dates in the format YYYY-MM-DD e.g. 2005-01-01."
         )
-
-    if arguments.verbose:
+    print(arguments.not_verbose)
+    if arguments.not_verbose == True:
         logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
     # Set up the MVP and go!
