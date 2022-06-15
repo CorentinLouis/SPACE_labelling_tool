@@ -75,7 +75,6 @@ def main():
             f"Date range {arguments.date_range} is not in ISO date format.\n"
             f"Please provide the dates in the format YYYY-MM-DD e.g. 2005-01-01."
         )
-    print(arguments.not_verbose)
     if arguments.not_verbose == True:
         logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
