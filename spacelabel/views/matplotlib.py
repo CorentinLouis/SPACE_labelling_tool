@@ -59,7 +59,8 @@ class ViewMatPlotLib(View):
         # Try to fix backend issues
         if platform.system() == 'Windows':
             matplotlib.use('Qt5Agg')
-        elif platform.system() == 'Darwin':
+#        elif platform.system() == 'Darwin':
+        else:
             matplotlib.use('TkAgg')
 
         log.debug("ViewMatPlotLib: Initialised")
