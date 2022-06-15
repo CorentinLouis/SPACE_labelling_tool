@@ -49,7 +49,7 @@ def main():
         help="The minimum and maximum fraction of the flux to be display in the dynamic range"
     )
     parser.add_argument(
-        '--not_verbose', dest='not_verbose', action='store_false', #metavar="VERBOSE",
+        '--not_verbose', dest='not_verbose', action='store_false',
         help="If not_verbose is called, the debug log will not be printed. By default: verbose mode"
     )
     arguments = parser.parse_args()
