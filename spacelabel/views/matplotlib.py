@@ -228,12 +228,13 @@ class ViewMatPlotLib(View):
 
         :param features: The list of features to draw
         """
+
         for feature in features:
-            self._draw_fill(*feature.arrays())
+            self._draw_fill(*feature.arrays(), feature._name)
 
         log.debug(f"_draw_features: Drawn {len(features)}")
 
-    def _draw_fill(self, time: Time, frequency: ndarray):
+    def _draw_fill(self, time: Time, frequency: ndarray, name: str):
         """
         Plot a single feature on the map.
 
@@ -249,6 +250,7 @@ class ViewMatPlotLib(View):
                 linestyle='--', linewidth=1.5,
                 alpha=0.75, fill=False
             )
+            axis.text(time_datetime[0], frequency[0], name)
 
     def _create_polyselector(self):
         """
