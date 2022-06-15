@@ -48,6 +48,10 @@ def main():
         '-frac_dyn_range', type=float, nargs=2, dest='frac_dyn_range', metavar="FRAC_DYN_RANGE", default=[0.05, 0.95],
         help="The minimum and maximum fraction of the flux to be display in the dynamic range"
     )
+    parser.add_argument(
+        '-verbose', type=bool, nargs=1, dest='verbose', metavar="VERBOSE", default=True,
+        help="If the value is True, the debug log will be printed."
+    )
     arguments = parser.parse_args()
 
     # ==================== INPUT FILE ====================
@@ -72,7 +76,8 @@ def main():
             f"Please provide the dates in the format YYYY-MM-DD e.g. 2005-01-01."
         )
 
-    logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+    if arguments.verbose:
+        logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
     # Set up the MVP and go!
     dataset: DataSet = load_dataset(
