@@ -241,6 +241,8 @@ class ViewMatPlotLib(View):
         :param time:
         :param frequency:
         """
+        time_mean = Time(numpy.mean(time.value),format='jd').datetime64
+        frequency_mean = numpy.mean(frequency)
         time_datetime = time.datetime64
 
         for axis in self._ax_data.values():
@@ -250,7 +252,7 @@ class ViewMatPlotLib(View):
                 linestyle='--', linewidth=1.5,
                 alpha=0.75, fill=False
             )
-            axis.text(time_datetime[0], frequency[0], name)
+            axis.text(time_mean, frequency_mean, name)
 
     def _create_polyselector(self):
         """
