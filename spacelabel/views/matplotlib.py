@@ -7,6 +7,7 @@ import matplotlib
 import numpy
 
 from astropy.time import Time
+from astropy.time import Time as astropyTime
 from easygui import multchoicebox, enterbox
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseEvent
@@ -241,7 +242,7 @@ class ViewMatPlotLib(View):
         :param time:
         :param frequency:
         """
-        time_mean = Time(numpy.mean(time.value),format='jd').datetime64
+        time_mean = astropyTime(numpy.mean(time.value),format='jd').datetime64
         frequency_mean = numpy.mean(frequency)
         time_datetime = time.datetime64
 
