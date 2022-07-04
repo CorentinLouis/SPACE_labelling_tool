@@ -312,7 +312,8 @@ class ViewMatPlotLib(View):
                 ) for vertex in vertexes
             ]
             feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name)
-            self._draw_fill(*feature.arrays())  # Make sure the feature is drawn on all other panels of the plot
+            self._draw_fill(*feature.arrays(), feature._name) # Make sure the feature is drawn on all other panels of the plot
+
             log.info(f"_event_selected: New feature '{self._feature_name}'")
 
         self._create_polyselector()
