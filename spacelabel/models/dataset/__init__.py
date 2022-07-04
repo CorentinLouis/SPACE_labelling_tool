@@ -36,9 +36,12 @@ class DataSet(ABC):
     _file_path: Path = None  # The suffix-less file path
     _observer: str = None
     _time: Time = None
+    _time_1d: Time = None #for storing time series data for 1d time series
     _freq: ndarray = None
     _data: Dict[str, ndarray] = {}  # Private dictionary containing the data for the variables
+    _data_1d: Dict[str, ndarray] = {}  # Private dictionary containing the data for 1d time series
     _units: Dict[str, str] = {}
+    _units_1d: Dict[str, str] = {}
     _features: List[Feature] = []
     _presenter: 'Presenter' = None
     _log_level: Optional[int] = None  # Passed to Features
@@ -72,6 +75,20 @@ class DataSet(ABC):
             log.setLevel(log_level)
             self._log_level = log_level
 
+    def pad(self, 
+        file_path: Path,
+        time_minimum: Optional[float] = None
+        ): 
+        """
+        
+        Replaces missing data in 1D time series with NaNs at the minimum resolution of the measurements. 
+        This ensures the 1D plot is blank when no data is available. 
+        
+        """
+        self._file_path = file_path
+        raise NotImplementedError(f"Warning: Missing data in {self._config['other']} and the padding function to skip missing datapoints is not implemented.")
+
+
     def load(self):
         """
         Implemented in the specific subtypes, this loads the data from file.
@@ -86,6 +103,7 @@ class DataSet(ABC):
         self,
         frequency_resolution: Optional[int] = None,
         time_minimum: Optional[float] = None,
+        frequency_guide: Optional[list] = None,
     ):
         """
         Rescales the frequency and/or time, and all measurements depending on them, then saves to an HDF5 file.
@@ -190,8 +208,35 @@ class DataSet(ABC):
                         )
 
                 self._data[name] = measurement_new
+            for name, measurement_original in self._data_1d.items():
+                log.info(
+                    f"preprocessing: Downsampling time of {len(self._data.keys())} "
+                    f"by a factor of 1/{(time_minimum)/(time_original[1]-time_original[0]).to(units.s)}"
+                )
+                measurement_new = numpy.zeros(
+                    (
+                        len(time_rescaled)
+                    )
+                )
+                
+                
+                for i in range(0, len(self._freq)):
+                    measurement_new = numpy.interp(
+                        time_rescaled.value, self._time_1d, measurement_original
+                        )
+                        
+                self._data_1d[name] = measurement_new
 
-                self._time = time_rescaled
+
+            self._time = time_rescaled
+            self._time_1d = None
+
+            if frequency_guide:
+                for value in frequency_guide:
+                    self._data_1d[f"{value} Hz"] = numpy.repeat(value, len(self._time))
+                    self._units_1d[f"{value} Hz"] = "Hz"
+
+
 
         if time_minimum or frequency_resolution:
             self.save_to_hdf()
@@ -215,6 +260,12 @@ class DataSet(ABC):
         for key, value in self._data.items():
             output_file.create_dataset(key, data=value, compression='lzf')
             output_file[key].attrs['units'] = self._units[key]
+
+        for key, value in self._data_1d.items():
+            output_file.create_dataset(key, data=value)
+            output_file[key].attrs['units'] = self._units_1d[key]
+
+
 
         output_file.close()
 
@@ -271,6 +322,35 @@ class DataSet(ABC):
             data[key] = self._data[key][time_mask, :]
 
         return self._time[time_mask], self._freq, data
+        
+    def get_1d_data_for_time_range(
+            self, time_start: Time, time_end: Time,
+            measurements: Union[None, str, List[str]] = None
+    ) -> Tuple[Time, Dict[str, ndarray]]:
+        """
+        Returns a dictionary containing the time series data for the specified time range.
+        Implemented as returning a dictionary to make it easier to expand to multiple data types.
+
+        :param time_start: The start of the time range (inclusive)
+        :param time_end: The end of the time range (inclusive)
+        :param measurements: The types of parameter to get, all if None
+        :return: Astropy Time and a dictionary containing the keys corresponding to whatever 1D time series are used
+        """
+        log.info(f"get_1d_data_for_time_range: From {time_start} ({time_start.jd}) to {time_end} ({time_end.jd})")
+
+        if measurements and not isinstance(measurements, list):
+            # If the user hasn't specified a list of measurements, convert to a single-entry list for ease of use
+            measurements: List = [measurements]
+ 
+        print("time_1d", self._time)
+        time_mask: ndarray = (time_start <= self._time) & (self._time <= time_end)
+        data_1d: Dict[str, ndarray] = {}
+        keys: List[str] = measurements if measurements else self._data_1d.keys()
+
+        for key in keys:
+            data_1d[key] = self._data_1d[key][time_mask]
+
+        return self._time[time_mask], data_1d
 
     def add_feature(self, name: str, vertexes: List[Tuple[Time, float]]) -> Feature:
         """
@@ -305,6 +385,10 @@ class DataSet(ABC):
 
     def get_units(self) -> Dict[str, str]:
         return self._units
+
+    def get_units_1d(self) -> Dict[str, str]:
+        return self._units_1d
+
 
     def get_time_range(self) -> Tuple[Time, Time]:
         """

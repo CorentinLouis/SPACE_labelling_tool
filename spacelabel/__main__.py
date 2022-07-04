@@ -52,6 +52,12 @@ def main():
         '--not_verbose', dest='not_verbose', action='store_false',
         help="If not_verbose is called, the debug log will not be printed. By default: verbose mode"
     )
+    parser.add_argument(
+        '-g', type=int, nargs=1, dest='frequency_guide', metavar="FREQUENCY_GUIDE", default=None,
+        help="Creates horizontal line(s) at specified frequencies to aid with labeling."
+             "Lines can be toggled using check boxes."
+    )    
+
     arguments = parser.parse_args()
 
     # ==================== INPUT FILE ====================
@@ -88,7 +94,8 @@ def main():
     dataset.load()  # Load the dataset if the dates are valid
     dataset.preprocess(
         frequency_resolution=(arguments.frequency_resolution[0] if arguments.frequency_resolution else None),
-        time_minimum=(arguments.time_minimum[0] if arguments.time_minimum else None)
+        time_minimum=(arguments.time_minimum[0] if arguments.time_minimum else None),
+        frequency_guide=(arguments.frequency_guide if arguments.frequency_guide else None)
     )
 
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)

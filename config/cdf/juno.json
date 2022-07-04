@@ -1,16 +1,18 @@
 {
-  "time": "Epoch",
-  "frequency": "Frequency",
-  "measurements": {
+  "time": ["Epoch"],
+  "frequency": ["Frequency"],
+  "measurements": [
+  {
     "Flux": {
       "value": "Data",
       "background": "Background",
       "conversion": 0.002654418728,
       "units": "W m^{-2} Hz^{-1}"
-    }
-  },
+    }}
+    ],
   "preprocess": {
-    "frequency_resolution": 230,
-    "time_minimum": 15
-  }
+    "frequency_resolution": 200,
+    "time_minimum": 60
+  },
+  "other": []
 }

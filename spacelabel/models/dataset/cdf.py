@@ -2,9 +2,9 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Optional, List
-
+import pandas as pd
 import numpy
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 from astropy import units
 from astropy.units import Unit
 from astropy import constants
@@ -56,10 +56,11 @@ class DataSetCDF(DataSet):
             # Let's check the required columns from the config - do they all exist in the file?
             config = configs[config_name]
             config_columns = [config['time'], config['frequency']]
-            for measurement in config['measurements'].values():
-                config_columns.append(measurement['value'])
-                if measurement.get('background', None):
-                    config_columns.append(measurement['background'])
+            for receiver in config['measurements']:
+                for measurement in receiver.values():
+                        config_columns.append(measurement['value'])
+                        if measurement.get('background', None):
+                            config_columns.append(measurement['background'])
 
             if not set(config_columns).intersection(set(columns)):
                 raise KeyError(
@@ -77,11 +78,12 @@ class DataSetCDF(DataSet):
 
             for config_entry in configs.values():
                 # Let's check the required columns from the config - do they all exist in the file?
-                config_columns = [config_entry['time'], config_entry['frequency']]
-                for measurement in config_entry['measurements'].values():
-                    config_columns.append(measurement['value'])
-                    if measurement.get('background', None):
-                        config_columns.append(measurement['background'])
+                config_columns = [t for t in config_entry['time']] + [f for f in config_entry['frequency']]
+                for receiver in config_entry['measurements']:
+                    for measurement in receiver.values():
+                        config_columns.append(measurement['value'])
+                        if measurement.get('background', None):
+                            config_columns.append(measurement['background'])
 
                 if set(config_columns).intersection(set(columns)):
                     valid_configs.append(config_entry)
@@ -136,9 +138,17 @@ class DataSetCDF(DataSet):
         epochs: List[ndarray] = []
         for cdf_path in tqdm(cdf_paths):
             file: CDF = CDF(str(cdf_path))
-            epochs.append(file[self._config['time']])
-        
-        cdf_time_format = CDF(str(cdf_paths[0])).varinq(self._config['time'])['Data_Type_Description']
+            if self._config['time'].count(self._config['time'][0]) == len(self._config['time']):
+                epochs.append(file[self._config['time'][0]])
+                cdf_time_format = CDF(str(cdf_paths[0])).varinq(self._config['time'][0])['Data_Type_Description']
+            else:
+                first = True
+                for t in self._config['time']:
+                    if first == True: 
+                        ep = file[t]
+                        print(ep)
+                        print("In progress")
+                        exit(1)
         
         if cdf_time_format == 'CDF_TIME_TT2000':
             cdf_time_format = 'CDF_TT2000'
@@ -151,16 +161,94 @@ class DataSetCDF(DataSet):
         self._time.format = 'jd'
         self._units['Time'] = "JD"
 
-        self._freq = file[self._config['frequency']]
-        self._units['Frequency'] = file.varattsget(self._config['frequency'])['UNITS']
+        first = True
+        for f in self._config['frequency']:
+            if first == True: 
+                fr = file[f] 
+                first = False
+            else:
+                fr = numpy.concatenate((fr, file[f]))
+        self._freq = fr
+        #We'll probably want to make this more sophiosticated but it will do for a demo
+        self._units['Frequency'] = file.varattsget(self._config['frequency'][0])['UNITS'] 
 
         self._observer = file.globalattsget()['Mission_group']
+
+    def pad(self,
+            cdf_file,
+            series,
+            time_minimum: Optional[float] = None,
+            missing_data: Optional[str] = False
+            ): 
+
+        if not time_minimum:
+            time_minimum = self._config['preprocess'].get('time_minimum', None)
+        if time_minimum:
+            if time_minimum < 0:
+                raise ValueError(f"Requested a negative minimum time bin: {time_minimum}")
+            elif TimeDelta(time_minimum, format='sec') < (self._time[1] - self._time[0]):
+                log.warning("preprocess: The target time bin is smaller than the time bins in the data; skipping.")
+                time_minimum = None
+        time_minimum = numpy.timedelta64(time_minimum, 's')
+        
+        cdf_time_format = cdf_file.varinq(self._config['time'][0])['Data_Type_Description'].lower()
+        if cdf_time_format == 'CDF_TIME_TT2000'.lower():
+            cdf_time_format = 'CDF_TT2000'.lower()
+
+
+        if missing_data:
+            newtime = Time(pd.date_range(Time(cdf_file[self._config['time'][0]], format = cdf_time_format).datetime64[0], 
+                           Time(cdf_file[self._config['time'][0]], format = cdf_time_format).datetime64[-1], 
+                           int(numpy.ceil(((
+                               Time(cdf_file[self._config['time'][0]], 
+                                              format = cdf_time_format).datetime64[-1] - 
+                               Time(cdf_file[self._config['time'][0]], 
+                                    format = cdf_time_format).datetime64[0])/time_minimum))))).jd
+            newdata = numpy.repeat(numpy.nan, len(newtime))
+            
+            return newtime, newdata       
+        else:
+            data = cdf_file[series["value"]]
+            timefc = Time(cdf_file[series["time"]], format = cdf_time_format).datetime64
+
+            new_time = numpy.array([], dtype = 'datetime64[ns]')
+            new_data = numpy.array([], dtype = 'float64')
+
+            if timefc[0] > Time(cdf_file[self._config['time'][0]], format = cdf_time_format).datetime64[0]:
+                timefc = numpy.concatenate((numpy.array([Time(cdf_file[self._config['time'][0]], format = cdf_time_format).datetime64[0]]),
+                                timefc))
+                data = numpy.concatenate((numpy.array([numpy.nan]), data))
+            if timefc[-1] < Time(cdf_file[self._config['time'][0]], format = cdf_time_format).datetime64[-1]:
+                timefc = numpy.concatenate((timefc,
+                                     numpy.array([Time(cdf_file[self._config['time'][0]], format = cdf_time_format).datetime64[-1]])))
+                data = numpy.concatenate((data,numpy.array([numpy.nan])))
+
+
+
+            for t in range(0, len(timefc)-1):
+                if timefc[t+1]-timefc[t] > time_minimum: 
+                    new_time = numpy.concatenate((new_time,  
+                                              numpy.array(pd.date_range(timefc[t],
+                                                                     timefc[t-1],
+                                                                     int(numpy.ceil(((timefc[t+1]-timefc[t])/time_minimum))))[:-1])
+                                         ))
+                    new_data = numpy.concatenate((new_data,  
+                                              numpy.array([data[t]]+[numpy.nan for l in range(0, 
+                                                                                        int(numpy.ceil((
+                                                                                            (timefc[t+1]-timefc[t])/time_minimum)-2
+                                                                                        )))])
+                                             ))
+                else: 
+                    new_time = numpy.concatenate((new_time, numpy.array([timefc[t]])))
+                    new_data = numpy.concatenate((new_data, numpy.array([data[t]])))
+
+            new_time  = Time(new_time).jd
+            return new_time, new_data
 
     def load(self):
         """
         Reads a datafile in CDF format.
         """
-        super().load()
 
         log.info(f"DataSetCDF: Loading '{self._file_path}[*].cdf...")
 
@@ -169,24 +257,110 @@ class DataSetCDF(DataSet):
         cdf_paths.sort()
 
         file: CDF = None
-        for measurement_name in self._config['measurements'].keys():
-            measurement_config = self._config['measurements'][measurement_name]
-            measurements: List[ndarray] = []
-            for cdf_path in cdf_paths:
-                file = CDF(str(cdf_path))
-                measurements.append(file[measurement_config['value']])
+        
+        for measurement_name in self._config['measurements'][0].keys(): #Maybe dubious if we want different antenna configs put together
+            first = True
+            for measure in self._config['measurements']:
+                if first == True:
+                    measurement_config = measure[measurement_name]
+                    measurements: List[ndarray] = []
 
-            # The data is not background-subtracted. Background varies per frequency bin.
-            measurement = numpy.concatenate(measurements)
-            if measurement_config.get('background', None):
-                measurement -= file[measurement_config['background']]
+                    for cdf_path in tqdm(cdf_paths):
+                        file = CDF(str(cdf_path))
+                        measurements.append(file[measurement_config['value']])
+                    first = False
+                    # The data is not background-subtracted. Background varies per frequency bin.
+                    measurement = numpy.concatenate(measurements)
+                    if measurement_config.get('background', None):
+                        measurement -= file[measurement_config['background']]
 
-            # The data may not be in the units we want, so apply the conversion factor
-            if measurement_config.get('conversion', None):
-                measurement *= measurement_config['conversion']
+                    # The data may not be in the units we want, so apply the conversion factor
+                    if measurement_config.get('conversion', None):
+                        measurement *= measurement_config['conversion']
 
+                else:
+                    measurement_config = measure[measurement_name]
+                    measurements2: List[ndarray] = []
+                    for cdf_path in cdf_paths:
+                        file = CDF(str(cdf_path))
+                            
+                        measurements2.append(file[measurement_config['value']])
+                    first = False
+                    # The data is not background-subtracted. Background varies per frequency bin.
+                    measurement2 = numpy.concatenate(measurements2)
+                    if measurement_config.get('background', None):
+                        measurement2 -= file[measurement_config['background']]
+
+                    # The data may not be in the units we want, so apply the conversion factor
+                    if measurement_config.get('conversion', None):
+                        measurement2 *= measurement_config['conversion']
+                    measurement = numpy.concatenate((measurement,measurement2), axis = 1)
             self._data[measurement_name] = measurement
             self._units[measurement_name] = measurement_config.get('units', None)
+
+        first = True
+        for series in self._config['other']:    
+            if first == True:  
+                measurements: List[ndarray] = []
+                times_1d: List[ndarray] = []
+                
+                total_time_series_measurements = []
+
+                for path in tqdm(cdf_paths):
+                    cdf_file = CDF(path)
+
+                    try:
+                        total_time_series_measurements.append(len(cdf_file[series["value"]]))
+                    except:
+                        pass
+    
+                threshold = numpy.array(total_time_series_measurements).max()-(numpy.array(total_time_series_measurements).max()/(24*30))
+
+
+                for path in tqdm(cdf_paths):
+                    cdf_file = CDF(path)
+                    try:
+                        if len(cdf_file[series["time"]]) > threshold:
+                            cdf_time_format = cdf_file.varinq(series['time'])['Data_Type_Description'].lower()
+                            if cdf_time_format == 'CDF_TIME_TT2000'.lower():
+                                cdf_time_format = 'CDF_TT2000'.lower()
+
+                            measurements.append(cdf_file[series["value"]])
+                            times_1d.append(Time(cdf_file[series["time"]], format = cdf_time_format).jd)
+                        else: 
+                            t, d = self.pad(cdf_file, series, missing_data = False)
+                            measurements.append(d)
+                            times_1d.append(t)
+
+                    except:
+                        t, d = self.pad(cdf_file, series, missing_data = True)
+                        measurements.append(d)
+                        times_1d.append(t)
+                
+    
+                
+                        
+                        
+                first = False
+                # The data is not background-subtracted. Background varies per frequency bin.
+                measurement = numpy.concatenate(measurements)
+                time_1d = numpy.concatenate(times_1d)
+                if measurement_config.get('background', None):
+                    measurement -= file[measurement_config['background']]
+
+                # The data may not be in the units we want, so apply the conversion factor
+                if measurement_config.get('conversion', None):
+                    measurement *= measurement_config['conversion']
+
+
+        
+
+            self._time_1d = time_1d        
+            self._units_1d['Time'] = "JD"
+            
+            
+            self._data_1d[series["value"]] = measurement
+            self._units_1d[series["value"]] = measurement_config.get('units', None)
 
         log.info(f"DataSetCDF: Loaded '{self._file_path}[*].cdf...'")
 

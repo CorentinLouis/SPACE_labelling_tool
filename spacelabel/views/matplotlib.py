@@ -13,8 +13,8 @@ from matplotlib.backend_bases import MouseEvent
 from matplotlib.colors import LogNorm
 from matplotlib.dates import DateFormatter, num2julian
 from matplotlib.figure import Figure
-from matplotlib.pyplot import ion, figure, close, pause, show
-from matplotlib.widgets import PolygonSelector, Button
+from matplotlib.pyplot import ion, figure, close, pause, show, plot, axes
+from matplotlib.widgets import PolygonSelector, Button, CheckButtons
 from numpy import ndarray
 
 from spacelabel.models.feature import Feature
@@ -40,11 +40,16 @@ class ViewMatPlotLib(View):
     _ax_prev: Axes = None
     _ax_next: Axes = None
     _ax_save: Axes = None
+    _ax_1d: Axes = None
     _feature_name: str = None
     _selector: Dict[str, PolygonSelector] = None
     _button_next: Button = None
     _button_prev: Button = None
     _button_save: Button = None
+    _button_1d: Button = None
+    _lines: List[plot] = None
+    _labels: List[str] = None       
+
 
     def __init__(self, log_level: Optional[int] = None):
         """
@@ -143,6 +148,31 @@ class ViewMatPlotLib(View):
             choices=measurements
         )
 
+    def draw_1d_data(self, time: Time, data: Dict[str, ndarray], units: Optional[Dict[str, str]]):
+        time = time.datetime64
+        lines = []
+        labels = []
+        set_visible = []
+        for name, measurement in data.items(): 
+            p = plot(time, measurement, color = "white", linestyle = "dashed")
+            lines.append(p)
+            labels.append(name)
+            set_visible.append(True)
+        
+
+        self._lines = numpy.reshape(lines, -1)
+        self._labels = labels         
+        
+        # xposition, yposition, width and height
+        self._ax_1d = self._fig.add_axes([0.85, 0.0, 0.1, 0.1])
+        self._button_1d = CheckButtons(self._ax_1d, labels, set_visible)
+        self._button_1d.on_clicked(self._event_button_1d)
+
+    def _event_button_1d(self, event: MouseEvent):
+        index = self._labels.index(event)
+        self._lines[index].set_visible(not self._lines[index].get_visible())
+
+
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str], frac_dyn_range: Dict[float,float],
             features: Optional[List[Feature]]
@@ -171,7 +201,7 @@ class ViewMatPlotLib(View):
             image = self._ax_data[measurement].pcolormesh(
                 # Clip to avoid white spots, transpose as data is time-major not frequency-major
                 time, freq, values.clip(min=1e-31).T if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else values.T,
-                cmap='Spectral_r' if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
+                cmap='viridis' if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
                 norm=norm,
                 shading='auto'
             )
@@ -312,7 +342,7 @@ class ViewMatPlotLib(View):
                 ) for vertex in vertexes
             ]
             feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name)
-            self._draw_fill(*feature.arrays())  # Make sure the feature is drawn on all other panels of the plot
+            self._draw_fill(*feature.arrays(), feature._name) # Make sure the feature is drawn on all other panels of the plot
             log.info(f"_event_selected: New feature '{self._feature_name}'")
 
         self._create_polyselector()

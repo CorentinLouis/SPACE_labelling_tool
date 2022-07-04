@@ -66,22 +66,38 @@ class DataSetPreprocessed(DataSet):
         names.remove('Time')
         self._time = Time(file['Time'], format='jd')
         self._units['Time'] = file['Time'].attrs['units']
-
+        self._units_1d['Time'] = file['Time'].attrs['units']
+        
+        
+        
+        
+        
         for name in names:
             # KEY DIFFERENCE TO NORMAL HDF5 READIN: We don't transpose here, as the preprocessed datasets are time major
-            self._data[name] = numpy.array(file[name])
-            self._units[name] = file[name].attrs['units']
-
+            if len(numpy.array(file[name]).shape) == 2:
+                self._data[name] = numpy.array(file[name])
+                self._units[name] = file[name].attrs['units']
+            elif len(numpy.array(file[name]).shape) == 1:
+                self._data_1d[name] = numpy.array(file[name])
+                self._units_1d[name] = file[name].attrs['units']
+            else:
+                raise ValueError(f"Data of dimension {numpy.array(file[name]).shape} is not supported.")
+                
+                
+                
+                
+                
     def preprocess(
             self,
             frequency_resolution: Optional[int] = None,
             time_minimum: Optional[float] = None,
+            frequency_guide: Optional[list] = None,
     ):
         """
         As this file is already preprocessed, do nothing unless the user
         This does nothing, unless the user has tried to specify pre-processing settings.
         """
-        if frequency_resolution or time_minimum:
+        if frequency_resolution or time_minimum or frequency_guide:
             raise ValueError(
                 f"preprocess: This file has already been pre-processed!\n"
                 f"Please delete the pre-processed save file '{self._file_path}.preprocessed.hdf5' "
