@@ -7,6 +7,7 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING, Type
+import shutil
 
 import math
 import numpy
@@ -377,8 +378,9 @@ class DataSet(ABC):
         path_tfcat: Path = self._file_path.parent / f'catalogue_{self._observer}.json'
 
         if not path_tfcat.exists():
-            log.info("load_features_from_json: No existing JSON file")
+            log.info("load_features_from_json: No existing JSON catalogue file")
         else:
+            shutil.copyfile(path_tfcat, self._file_path.parent / f'catalogue_{self._observer}_copy.json')
             log.info(
                 f"load_features_from_json: Loading '{path_tfcat}'"
             )
