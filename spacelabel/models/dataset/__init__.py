@@ -331,7 +331,8 @@ class DataSet(ABC):
         """
         Writes a summary of the bounds of the features that have been selected, to text file.
         """
-        with open(self._file_path.with_suffix('.txt'), 'w') as file_text:
+        path_tfcat_txt: Path = self._file_path.parent / f'catalogue_{self._observer}.txt'
+        with open(path_tfcat_txt, 'w') as file_text:
             for feature in self._features:
                 file_text.write(f'{feature.to_text_summary()}\n')
 
