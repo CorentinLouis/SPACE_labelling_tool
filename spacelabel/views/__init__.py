@@ -57,7 +57,7 @@ class View(ABC):
     @abstractmethod
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
-            features: Optional[List[Feature]]
+            frac_dyn_range: Dict[float,float], features: Optional[List[Feature]]
     ):
         """
         Abstract method to draw the data and features provided
