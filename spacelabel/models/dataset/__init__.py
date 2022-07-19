@@ -109,6 +109,48 @@ class DataSet(ABC):
                 log.warning("preprocess: The target time bin is smaller than the time bins in the data; skipping.")
                 time_minimum = None
 
+        if time_minimum:
+            # If we're rescaling the time resolution, do that.
+            log.info(
+                f"preprocessing: Downsampling time bin width of {len(self._data.keys())} "
+                f"measurements to {time_minimum} seconds... this might take a while!"
+            )
+
+            time_original: Time = self._time
+            
+            
+            
+            time_rescaled: Time = TimeSeries(
+                time_start=time_original[0],
+                time_delta=time_minimum * units.s,
+                n_samples=math.ceil((time_original[-1] - time_original[0]).to(units.s).value/time_minimum)
+            ).time
+
+
+            for name, measurement_original in self._data.items():
+                log.info(
+                    f"preprocessing: Downsampling time of {len(self._data.keys())} "
+                    f"by a factor of 1/{(time_minimum)/(time_original[1]-time_original[0]).to(units.s)}"
+                )
+                measurement_new = numpy.zeros(
+                    (
+                        len(time_rescaled),
+                        len(self._freq)
+                    )
+                )
+
+
+#                for i in range(0, len(self._freq)):
+                for i in trange(len(self._freq)):
+                    measurement_new[:, i] = numpy.interp(
+                        time_rescaled.value, time_original.value, measurement_original[:, i]
+                        )
+
+                self._data[name] = measurement_new
+
+                self._time = time_rescaled
+
+
         if frequency_resolution:
             freq_original: ndarray = self._freq
             freq_rescaled: ndarray = 10 ** (
@@ -152,48 +194,7 @@ class DataSet(ABC):
                     self._data[name] = measurement_new
 
             self._freq = freq_rescaled
-
-        if time_minimum:
-            # If we're rescaling the time resolution, do that.
-            log.info(
-                f"preprocessing: Downsampling time bin width of {len(self._data.keys())} "
-                f"measurements to {time_minimum} seconds... this might take a while!"
-            )
-
-            time_original: Time = self._time
             
-            
-            
-            time_rescaled: Time = TimeSeries(
-                time_start=time_original[0],
-                time_delta=time_minimum * units.s,
-                n_samples=math.ceil((time_original[-1] - time_original[0]).to(units.s).value/time_minimum)
-            ).time
-
-
-            for name, measurement_original in self._data.items():
-                log.info(
-                    f"preprocessing: Downsampling time of {len(self._data.keys())} "
-                    f"by a factor of 1/{(time_minimum)/(time_original[1]-time_original[0]).to(units.s)}"
-                )
-                measurement_new = numpy.zeros(
-                    (
-                        len(time_rescaled),
-                        len(self._freq)
-                    )
-                )
-
-
-#                for i in range(0, len(self._freq)):
-                for i in trange(len(self._freq)):
-                    measurement_new[:, i] = numpy.interp(
-                        time_rescaled.value, time_original.value, measurement_original[:, i]
-                        )
-
-                self._data[name] = measurement_new
-
-                self._time = time_rescaled
-
         if time_minimum or frequency_resolution:
             self.save_to_hdf()
 
