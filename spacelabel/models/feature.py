@@ -44,25 +44,28 @@ class Feature:
         if log_level:
             log.setLevel(log_level)
 
-    def _crop(
-            self,
-            bbox:Tuple[Time, float, Time, float]
+    def cropping(
+                    vertexes: List[Tuple[Time, float]],
+                    bbox: Tuple[Time, float, Time, float]
     ):
         """
         Crops the feature to have the vertexes inside the plotting window
-
+        
         :param bbox: The bounds of the plotting window, as [T_min, freq_min, T_max, freq_max]
         """
+
         coordinates = [
-            (time.unix, freq) for time, freq in zip(self._time, self._freq)
+            (time.unix,freq) for time,freq in zip(list(zip(*vertexes))[0], list(zip(*vertexes))[1])
         ]
+
         polygon = Polygon(coordinates)
         polygon = polygon.intersection(
-            box(bbox[0].unix, bbox[1], bbox[2].unix, bbox[3])
+           box(bbox[0].unix, bbox[1], bbox[2].unix, bbox[3])
         )
-
-        self._time = Time(polygon.exterior.xy[0], format="unix")
-        self._freq = polygon.exterior.xy[1]
+        
+        return [
+            (Time(time.jd, format="jd"), freq) for time, freq in zip(Time(polygon.exterior.xy[0], format="unix"), polygon.exterior.xy[1])
+        ]
 
         
     def to_text_summary(self) -> str:
@@ -74,8 +77,7 @@ class Feature:
         return f"{self._name}, {min(self._time)}, {max(self._time)}, {min(self._freq)}, {max(self._freq)}"
 
     def to_tfcat_dict(
-            self,
-            bbox: Tuple[Time, float, Time, float] = None
+            self
     ) -> dict:
         """
         Expresses the polygon in the form of a dictionary containing a TFCat feature.
@@ -83,12 +85,11 @@ class Feature:
         :return: A dictionary. Times are returned as Unix time, not calendar time
         """
 
-        if bbox is not None:
-            self._crop(bbox)
 
         coordinates = [
             (time.unix, freq) for time, freq in zip(self._time, self._freq)
         ]
+
 
         # TFcat format is counter-clockwise, so invert if our co-ordinates are not
         if not LinearRing(coordinates).is_ccw:

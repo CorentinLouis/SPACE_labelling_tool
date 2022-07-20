@@ -145,7 +145,8 @@ class ViewMatPlotLib(View):
         )
 
     def draw_data(
-            self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str], frac_dyn_range: Dict[float,float],
+            self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
+            frac_dyn_range: Dict[float,float], #color_map: str,
             features: Optional[List[Feature]]
     ):
         """
@@ -172,7 +173,8 @@ class ViewMatPlotLib(View):
             image = self._ax_data[measurement].pcolormesh(
                 # Clip to avoid white spots, transpose as data is time-major not frequency-major
                 time, freq, values.clip(min=1e-31).T if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else values.T,
-                cmap='Spectral_r' if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
+                #cmap=color_map if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
+                cmap='viridis' if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
                 norm=norm,
                 shading='auto'
             )
@@ -249,7 +251,7 @@ class ViewMatPlotLib(View):
         for axis in self._ax_data.values():
             axis.fill(
                 time_datetime, frequency,
-                edgecolor='k',
+                edgecolor='salmon',
                 linestyle='--', linewidth=1.5,
                 alpha=0.75, fill=False
             )
@@ -312,7 +314,9 @@ class ViewMatPlotLib(View):
                     vertex[1] 
                 ) for vertex in vertexes
             ]
-            feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name)
+
+
+            feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name, crop_to_bounds = True)
             self._draw_fill(*feature.arrays(), feature._name) # Make sure the feature is drawn on all other panels of the plot
 
             log.info(f"_event_selected: New feature '{self._feature_name}'")
