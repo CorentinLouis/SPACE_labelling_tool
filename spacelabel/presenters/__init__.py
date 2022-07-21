@@ -4,7 +4,7 @@ from astropy.time import Time, TimeDelta
 from datetime import datetime, timedelta
 from numpy import datetime64
 from typing import List, Optional, Tuple, Dict
-
+import numpy
 from spacelabel.models.dataset import DataSet
 from spacelabel.models.feature import Feature
 from spacelabel.views.matplotlib import ViewMatPlotLib
@@ -86,7 +86,8 @@ class Presenter:
             time_start: Time,
             time_end: Time,
             frac_dyn_range: Dict[float, float],
-            overlap_fraction: float = OVERLAP_FRACTION
+            overlap_fraction: float = OVERLAP_FRACTION,
+            frequency_guide: float = None
     ):
         """
         Selects the data for the given time range, and draws it on the figure.
@@ -100,11 +101,12 @@ class Presenter:
         self._time_start = time_start
         self._time_end = time_end
         self._frac_dyn_range = frac_dyn_range
+        
+        
 
         time, flux, data = self._dataset.get_data_for_time_range(
             time_start, time_end, measurements=self._measurements
         )
-        
         time, data_1d = self._dataset.get_1d_data_for_time_range(
             time_start, time_end, measurements=self._measurements_1d
         )
@@ -119,9 +121,16 @@ class Presenter:
             features=features
         )
         
+        
         self._view.draw_1d_data(
-            time, data_1d, self._dataset.get_units_1d()
+            time, 
+            data_1d, 
+            self._dataset.get_units_1d(), 
+            (frequency_guide if frequency_guide else None),
+            self._dataset.get_units()["Frequency"]
         )
+        
+
         
         log.debug(f"request_data_time_range: Complete")
 

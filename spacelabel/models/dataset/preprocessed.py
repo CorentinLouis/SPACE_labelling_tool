@@ -90,14 +90,13 @@ class DataSetPreprocessed(DataSet):
     def preprocess(
             self,
             frequency_resolution: Optional[int] = None,
-            time_minimum: Optional[float] = None,
-            frequency_guide: Optional[list] = None,
+            time_minimum: Optional[float] = None
     ):
         """
         As this file is already preprocessed, do nothing unless the user
         This does nothing, unless the user has tried to specify pre-processing settings.
         """
-        if frequency_resolution or time_minimum or frequency_guide:
+        if frequency_resolution or time_minimum:
             raise ValueError(
                 f"preprocess: This file has already been pre-processed!\n"
                 f"Please delete the pre-processed save file '{self._file_path}.preprocessed.hdf5' "

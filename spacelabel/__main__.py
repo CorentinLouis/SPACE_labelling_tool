@@ -53,7 +53,7 @@ def main():
         help="If not_verbose is called, the debug log will not be printed. By default: verbose mode"
     )
     parser.add_argument(
-        '-g', type=int, nargs=1, dest='frequency_guide', metavar="FREQUENCY_GUIDE", default=None,
+        '-g', type=float, nargs="*", dest='frequency_guide', metavar="FREQUENCY_GUIDE", default=None,
         help="Creates horizontal line(s) at specified frequencies to aid with labeling."
              "Lines can be toggled using check boxes."
     )    
@@ -94,14 +94,17 @@ def main():
     dataset.load()  # Load the dataset if the dates are valid
     dataset.preprocess(
         frequency_resolution=(arguments.frequency_resolution[0] if arguments.frequency_resolution else None),
-        time_minimum=(arguments.time_minimum[0] if arguments.time_minimum else None),
-        frequency_guide=(arguments.frequency_guide if arguments.frequency_guide else None)
+        time_minimum=(arguments.time_minimum[0] if arguments.time_minimum else None)
     )
 
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)
     presenter: Presenter = Presenter(dataset, view, log_level=logging.INFO)
     presenter.request_measurements()
-    presenter.request_data_time_range(time_start=date_start, time_end=date_end, frac_dyn_range=arguments.frac_dyn_range)
+    presenter.request_data_time_range(
+        time_start=date_start, 
+        time_end=date_end, 
+        frac_dyn_range=arguments.frac_dyn_range,
+        frequency_guide=(arguments.frequency_guide if arguments.frequency_guide else None))
     presenter.run()
 
 

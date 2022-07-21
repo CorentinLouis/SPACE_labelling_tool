@@ -16,7 +16,7 @@ from matplotlib.figure import Figure
 from matplotlib.pyplot import ion, figure, close, pause, show, plot, axes
 from matplotlib.widgets import PolygonSelector, Button, CheckButtons
 from numpy import ndarray
-
+import matplotlib.patheffects as PathEffects
 from spacelabel.models.feature import Feature
 from spacelabel.views import View, SHOULD_MEASUREMENT_BE_LOG
 
@@ -148,7 +148,7 @@ class ViewMatPlotLib(View):
             choices=measurements
         )
 
-    def draw_1d_data(self, time: Time, data: Dict[str, ndarray], units: Optional[Dict[str, str]]):
+    def draw_1d_data(self, time: Time, data: Dict[str, ndarray], units: Optional[Dict[str, str]], frequency_guide: None, frequency_guide_units):
         time = time.datetime64
         lines = []
         labels = []
@@ -158,6 +158,13 @@ class ViewMatPlotLib(View):
             lines.append(p)
             labels.append(name)
             set_visible.append(True)
+        if frequency_guide:
+           for value in frequency_guide:
+               print(value)
+               p = plot(time, numpy.repeat(float(value), len(time)), color = "white", linestyle = "dashed")
+               lines.append(p)
+               labels.append(str(value)+frequency_guide_units)
+               set_visible.append(True)
         
 
         self._lines = numpy.reshape(lines, -1)
@@ -167,6 +174,7 @@ class ViewMatPlotLib(View):
         self._ax_1d = self._fig.add_axes([0.85, 0.0, 0.1, 0.1])
         self._button_1d = CheckButtons(self._ax_1d, labels, set_visible)
         self._button_1d.on_clicked(self._event_button_1d)
+
 
     def _event_button_1d(self, event: MouseEvent):
         index = self._labels.index(event)
@@ -189,7 +197,8 @@ class ViewMatPlotLib(View):
 
         # Convert the time from Astropy Time to numpy datetimes, which matplotlib can take in
         time = time.datetime64
-
+        
+        
         for measurement, values in data.items():
             if not SHOULD_MEASUREMENT_BE_LOG.get(measurement, True):
                 norm: Optional[LogNorm] = None
@@ -278,11 +287,13 @@ class ViewMatPlotLib(View):
         for axis in self._ax_data.values():
             axis.fill(
                 time_datetime, frequency,
-                edgecolor='k',
+                edgecolor='tomato',
                 linestyle='--', linewidth=1.5,
                 alpha=0.75, fill=False
             )
-            axis.text(time_mean, frequency_mean, name)
+            txt = axis.text(time_mean, frequency_mean, name, color = "tomato", fontfamily = 'sans-serif', size=12)
+            #txt.set_path_effects([PathEffects.withStroke(linewidth=1.25, foreground='k'),
+            #           PathEffects.Normal()])
 
     def _create_polyselector(self):
         """
@@ -298,7 +309,7 @@ class ViewMatPlotLib(View):
             self._selector[measurement] = PolygonSelector(
                 axis, onselect=self._event_selected, useblit=USE_BLIT,
                 lineprops={
-                    'color': 'k', 'linestyle': '--', 'linewidth': 1.5, 'alpha': 0.75
+                    'color': 'tomato', 'linestyle': '--', 'linewidth': 1.5, 'alpha': 0.75
                 }
             )
         log.debug("_create_polyselector: Complete")

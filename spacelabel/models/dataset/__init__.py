@@ -7,7 +7,7 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING, Type
-
+import shutil
 import math
 import numpy
 from astropy.timeseries import TimeSeries, aggregate_downsample
@@ -231,13 +231,6 @@ class DataSet(ABC):
             self._time = time_rescaled
             self._time_1d = None
 
-            if frequency_guide:
-                for value in frequency_guide:
-                    self._data_1d[f"{value} Hz"] = numpy.repeat(value, len(self._time))
-                    self._units_1d[f"{value} Hz"] = "Hz"
-
-
-
         if time_minimum or frequency_resolution:
             self.save_to_hdf()
 
@@ -260,6 +253,7 @@ class DataSet(ABC):
         for key, value in self._data.items():
             output_file.create_dataset(key, data=value, compression='lzf')
             output_file[key].attrs['units'] = self._units[key]
+
 
         for key, value in self._data_1d.items():
             output_file.create_dataset(key, data=value)
@@ -342,7 +336,7 @@ class DataSet(ABC):
             # If the user hasn't specified a list of measurements, convert to a single-entry list for ease of use
             measurements: List = [measurements]
  
-        print("time_1d", self._time)
+
         time_mask: ndarray = (time_start <= self._time) & (self._time <= time_end)
         data_1d: Dict[str, ndarray] = {}
         keys: List[str] = measurements if measurements else self._data_1d.keys()
@@ -460,8 +454,9 @@ class DataSet(ABC):
         path_tfcat: Path = self._file_path.parent / f'catalogue_{self._observer}.json'
 
         if not path_tfcat.exists():
-            log.info("load_features_from_json: No existing JSON file")
+            log.info("load_features_from_json: No existing JSON catalogue file")
         else:
+            shutil.copyfile(path_tfcat, self._file_path.parent / f'catalogue_{self._observer}_copy.json')
             log.info(
                 f"load_features_from_json: Loading '{path_tfcat}'"
             )
