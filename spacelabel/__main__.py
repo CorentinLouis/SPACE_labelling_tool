@@ -53,14 +53,18 @@ def main():
         help="The name of the color map that will be used for the intensity plot"
     )
     parser.add_argument(
+        '-g', type=float, nargs='*', dest='frequency_guide', metavar="FREQUENCY_GUIDE", default=None,
+        help="Draws horizontal line(s) on the visualisation at these specified frequencies to aid in interpretation of the plot."
+             "Values must be in the same units as the data."
+              "Lines can be toggled using check boxes."
+    )
+    parser.add_argument(
         '--not_verbose', dest='not_verbose', action='store_false',
         help="If not_verbose is called, the debug log will not be printed. By default: verbose mode"
     )
-    parser.add_argument(
-        '-g', type=float, nargs="*", dest='frequency_guide', metavar="FREQUENCY_GUIDE", default=None,
-        help="Creates horizontal line(s) at specified frequencies to aid with labeling."
-             "Lines can be toggled using check boxes."
-    )    
+        
+
+
 
     arguments = parser.parse_args()
 
