@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from numpy import datetime64
 from typing import List, Optional, Tuple, Dict
 import numpy
+from shapely.geometry import Polygon,box
 from spacelabel.models.dataset import DataSet
 from spacelabel.models.feature import Feature
 from spacelabel.views.matplotlib import ViewMatPlotLib
@@ -23,6 +24,7 @@ class Presenter:
     _time_start: Time = None
     _time_end: Time = None
     _frac_dyn_range: Dict[float, float] = None
+    _color_map: str = None
     _measurements: Optional[List[str]] = None
     _measurements_1d: Optional[List[str]] = None
     def __init__(
@@ -52,13 +54,16 @@ class Presenter:
         """
         self._view.run()
 
-    def register_feature(self, vertexes: List[Tuple[Time, float]], name: str) -> Feature:
+
+    def register_feature(self, vertexes: List[Tuple[Time, float]], name: str, crop_to_bounds: bool = False) -> Feature:
         """
         Registers a new feature on the dataset.
 
         :param vertexes: List of vertexes in the format (julian date, frequency)
         :param name: Name of the feature
         """
+        
+        vertexes = Feature.cropping(vertexes, self._dataset.get_bbox(self._time_start, self._time_end))
         return self._dataset.add_feature(name=name, vertexes=vertexes)
 
     def request_measurements(self):
@@ -86,6 +91,7 @@ class Presenter:
             time_start: Time,
             time_end: Time,
             frac_dyn_range: Dict[float, float],
+            color_map = str,
             overlap_fraction: float = OVERLAP_FRACTION,
             frequency_guide: float = None
     ):
@@ -101,10 +107,9 @@ class Presenter:
         self._time_start = time_start
         self._time_end = time_end
         self._frac_dyn_range = frac_dyn_range
-        
-        
+        self._color_map = color_map
 
-        time, flux, data = self._dataset.get_data_for_time_range(
+        time, freq, data = self._dataset.get_data_for_time_range(
             time_start, time_end, measurements=self._measurements
         )
         time, data_1d = self._dataset.get_1d_data_for_time_range(
@@ -116,8 +121,9 @@ class Presenter:
         )
 
         self._view.draw_data(
-            time, flux, data, self._dataset.get_units(),
+            time, freq, data, self._dataset.get_units(),
             frac_dyn_range=frac_dyn_range,
+            color_map = self._color_map,
             features=features
         )
         
@@ -145,7 +151,7 @@ class Presenter:
         self.request_data_time_range(
             time_start=self._time_start + time_window * (1.0 - overlap_fraction),
             time_end=self._time_end + time_window * (1.0 - overlap_fraction),
-            frac_dyn_range=self._frac_dyn_range
+            frac_dyn_range=self._frac_dyn_range, color_map=self._color_map
         )
         log.debug("request_data_next: Complete")
 
@@ -160,6 +166,10 @@ class Presenter:
         self.request_data_time_range(
             time_start=self._time_start - time_window * (1.0 - overlap_fraction),
             time_end=self._time_end - time_window * (1.0 - overlap_fraction),
-            frac_dyn_range=self._frac_dyn_range
+            frac_dyn_range=self._frac_dyn_range, color_map=self._color_map
         )
         log.debug("request_data_prev: Complete")
+
+
+    
+        

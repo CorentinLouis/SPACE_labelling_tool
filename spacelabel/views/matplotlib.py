@@ -7,6 +7,7 @@ import matplotlib
 import numpy
 
 from astropy.time import Time
+from astropy.time import Time as astropyTime
 from easygui import multchoicebox, enterbox
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseEvent
@@ -182,7 +183,8 @@ class ViewMatPlotLib(View):
 
 
     def draw_data(
-            self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str], frac_dyn_range: Dict[float,float],
+            self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
+            frac_dyn_range: Dict[float,float], color_map: str,
             features: Optional[List[Feature]]
     ):
         """
@@ -206,11 +208,12 @@ class ViewMatPlotLib(View):
                 vmin: float = numpy.quantile(values[values > 0.], frac_dyn_range[0])
                 vmax: float = numpy.quantile(values[values > 0.], frac_dyn_range[-1])
                 norm: Optional[LogNorm] = LogNorm(vmin=vmin, vmax=vmax)
+            
 
             image = self._ax_data[measurement].pcolormesh(
                 # Clip to avoid white spots, transpose as data is time-major not frequency-major
                 time, freq, values.clip(min=1e-31).T if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else values.T,
-                cmap='viridis' if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
+                cmap=color_map if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
                 norm=norm,
                 shading='auto'
             )
@@ -280,13 +283,14 @@ class ViewMatPlotLib(View):
         :param time:
         :param frequency:
         """
-        time_mean = Time(numpy.mean(time.value),format='jd').datetime64
+        time_mean = astropyTime(numpy.mean(time.value),format='jd').datetime64
         frequency_mean = numpy.mean(frequency)
         time_datetime = time.datetime64
 
         for axis in self._ax_data.values():
             axis.fill(
                 time_datetime, frequency,
+
                 edgecolor='tomato',
                 linestyle='--', linewidth=1.5,
                 alpha=0.75, fill=False
@@ -352,8 +356,10 @@ class ViewMatPlotLib(View):
                     vertex[1] 
                 ) for vertex in vertexes
             ]
-            feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name)
+
+            feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name, crop_to_bounds = True)
             self._draw_fill(*feature.arrays(), feature._name) # Make sure the feature is drawn on all other panels of the plot
+
             log.info(f"_event_selected: New feature '{self._feature_name}'")
 
         self._create_polyselector()

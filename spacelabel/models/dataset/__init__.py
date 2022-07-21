@@ -126,6 +126,65 @@ class DataSet(ABC):
                 log.warning("preprocess: The target time bin is smaller than the time bins in the data; skipping.")
                 time_minimum = None
 
+        if time_minimum:
+            # If we're rescaling the time resolution, do that.
+            log.info(
+                f"preprocessing: Downsampling time bin width of {len(self._data.keys())} "
+                f"measurements to {time_minimum} seconds... this might take a while!"
+            )
+
+            time_original: Time = self._time
+            
+            
+            
+            time_rescaled: Time = TimeSeries(
+                time_start=time_original[0],
+                time_delta=time_minimum * units.s,
+                n_samples=math.ceil((time_original[-1] - time_original[0]).to(units.s).value/time_minimum)
+            ).time
+            self._time = time_rescaled
+
+            for name, measurement_original in self._data.items():
+                log.info(
+                    f"preprocessing: Downsampling time of {len(self._data.keys())} "
+                    f"by a factor of 1/{(time_minimum)/(time_original[1]-time_original[0]).to(units.s)}"
+                )
+                measurement_new = numpy.zeros(
+                    (
+                        len(time_rescaled),
+                        len(self._freq)
+                    )
+                )
+
+                for i in trange(len(self._freq)):
+                    measurement_new[:, i] = numpy.interp(
+                        time_rescaled.value, time_original.value, measurement_original[:, i]
+                        )
+
+                self._data[name] = measurement_new
+                
+            for name, measurement_original in self._data_1d.items():
+                log.info(
+                    f"preprocessing: Downsampling time of {len(self._data.keys())} "
+                    f"by a factor of 1/{(time_minimum)/(time_original[1]-time_original[0]).to(units.s)}"
+                )
+                measurement_new = numpy.zeros(
+                    (
+                        len(time_rescaled)
+                    )
+                )
+
+                for i in range(0, len(self._freq)):
+                    measurement_new = numpy.interp(
+                        time_rescaled.value, self._time_1d, measurement_original
+                        )
+                        
+                self._data_1d[name] = measurement_new
+
+            self._time_1d = None
+    
+
+
         if frequency_resolution:
             freq_original: ndarray = self._freq
             freq_rescaled: ndarray = 10 ** (
@@ -169,67 +228,6 @@ class DataSet(ABC):
                     self._data[name] = measurement_new
 
             self._freq = freq_rescaled
-
-        if time_minimum:
-            # If we're rescaling the time resolution, do that.
-            log.info(
-                f"preprocessing: Downsampling time bin width of {len(self._data.keys())} "
-                f"measurements to {time_minimum} seconds... this might take a while!"
-            )
-
-            time_original: Time = self._time
-            
-            
-            
-            time_rescaled: Time = TimeSeries(
-                time_start=time_original[0],
-                time_delta=time_minimum * units.s,
-                n_samples=math.ceil((time_original[-1] - time_original[0]).to(units.s).value/time_minimum)
-            ).time
-
-
-            for name, measurement_original in self._data.items():
-                log.info(
-                    f"preprocessing: Downsampling time of {len(self._data.keys())} "
-                    f"by a factor of 1/{(time_minimum)/(time_original[1]-time_original[0]).to(units.s)}"
-                )
-                measurement_new = numpy.zeros(
-                    (
-                        len(time_rescaled),
-                        len(self._freq)
-                    )
-                )
-
-
-#                for i in range(0, len(self._freq)):
-                for i in trange(len(self._freq)):
-                    measurement_new[:, i] = numpy.interp(
-                        time_rescaled.value, time_original.value, measurement_original[:, i]
-                        )
-
-                self._data[name] = measurement_new
-            for name, measurement_original in self._data_1d.items():
-                log.info(
-                    f"preprocessing: Downsampling time of {len(self._data.keys())} "
-                    f"by a factor of 1/{(time_minimum)/(time_original[1]-time_original[0]).to(units.s)}"
-                )
-                measurement_new = numpy.zeros(
-                    (
-                        len(time_rescaled)
-                    )
-                )
-                
-                
-                for i in range(0, len(self._freq)):
-                    measurement_new = numpy.interp(
-                        time_rescaled.value, self._time_1d, measurement_original
-                        )
-                        
-                self._data_1d[name] = measurement_new
-
-
-            self._time = time_rescaled
-            self._time_1d = None
 
         if time_minimum or frequency_resolution:
             self.save_to_hdf()
@@ -346,6 +344,8 @@ class DataSet(ABC):
 
         return self._time[time_mask], data_1d
 
+
+
     def add_feature(self, name: str, vertexes: List[Tuple[Time, float]]) -> Feature:
         """
         Adds a new feature (either from file or a polyselector on the plot).
@@ -354,6 +354,7 @@ class DataSet(ABC):
         :param vertexes: A 2-d matplotlib array of coordinates as [time, freq]
         :return: The feature added
         """
+
         self._features.append(
             Feature(
                 name=name,
@@ -380,28 +381,30 @@ class DataSet(ABC):
     def get_units(self) -> Dict[str, str]:
         return self._units
 
+
     def get_units_1d(self) -> Dict[str, str]:
         return self._units_1d
 
 
-    def get_time_range(self) -> Tuple[Time, Time]:
+    def get_time_range(self, time_start, time_end) -> Tuple[Time, Time]:
         """
         Returns the start and end dates in the time window.
         """
-        return self._time[0], self._time[-1]
+        time_mask: ndarray = (time_start <= self._time) & (self._time <= time_end)
+        return self._time[time_mask][0], self._time[time_mask][-1]
 
 
     def get_frequency_range(self) -> Tuple[float, float]:
         """
-        Returns the min and max of the frequency range
+        Returns the min and max of the frequency range in the plotting window
         """
         return numpy.min(self._freq), numpy.max(self._freq)
 
-    def get_bbox(self) -> Tuple[Time, float, Time, float]:
+    def get_bbox(self, time_start, time_end) -> Tuple[Time, float, Time, float]:
         """
         Returns the time and frequency limits of the plotting window
         """
-        times = self.get_time_range()
+        times = self.get_time_range(time_start, time_end)
         freqs = self.get_frequency_range()
         return times[0], freqs[0], times[1], freqs[1]
 
@@ -409,7 +412,8 @@ class DataSet(ABC):
         """
         Writes a summary of the bounds of the features that have been selected, to text file.
         """
-        with open(self._file_path.with_suffix('.txt'), 'w') as file_text:
+        path_tfcat_txt: Path = self._file_path.parent / f'catalogue_{self._observer}.txt'
+        with open(path_tfcat_txt, 'w') as file_text:
             for feature in self._features:
                 file_text.write(f'{feature.to_text_summary()}\n')
 
@@ -418,7 +422,6 @@ class DataSet(ABC):
         """
         Writes the details of the bounds of each feature, to a TFCat-format JSON file.
         """
-        bbox = self.get_bbox()
         path_tfcat: Path = self._file_path.parent / f'catalogue_{self._observer}.json'
 
         with open(path_tfcat, 'w') as file_json:
@@ -426,7 +429,7 @@ class DataSet(ABC):
                 {
                     "type": "FeatureCollection",
                     "features": [
-                        feature.to_tfcat_dict(bbox=bbox) for feature in self._features
+                        feature.to_tfcat_dict() for feature in self._features
                     ],
                     "crs": {
                         "type": "local",
