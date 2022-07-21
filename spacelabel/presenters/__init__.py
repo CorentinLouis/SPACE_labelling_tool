@@ -25,6 +25,7 @@ class Presenter:
     _time_end: Time = None
     _frac_dyn_range: Dict[float, float] = None
     _color_map: str = None
+    _frequency_guide: Optional[List[float]] = None
     _measurements: Optional[List[str]] = None
     _measurements_1d: Optional[List[str]] = None
     def __init__(
@@ -92,8 +93,8 @@ class Presenter:
             time_end: Time,
             frac_dyn_range: Dict[float, float],
             color_map = str,
-            overlap_fraction: float = OVERLAP_FRACTION,
-            frequency_guide: float = None
+            frequency_guide: float = None,
+            overlap_fraction: float = OVERLAP_FRACTION
     ):
         """
         Selects the data for the given time range, and draws it on the figure.
@@ -107,6 +108,7 @@ class Presenter:
         self._time_start = time_start
         self._time_end = time_end
         self._frac_dyn_range = frac_dyn_range
+        self._frequency_guide = frequency_guide
         self._color_map = color_map
 
         time, freq, data = self._dataset.get_data_for_time_range(
@@ -132,7 +134,7 @@ class Presenter:
             time, 
             data_1d, 
             self._dataset.get_units_1d(), 
-            (frequency_guide if frequency_guide else None),
+            self._frequency_guide,
             self._dataset.get_units()["Frequency"]
         )
         
@@ -151,7 +153,8 @@ class Presenter:
         self.request_data_time_range(
             time_start=self._time_start + time_window * (1.0 - overlap_fraction),
             time_end=self._time_end + time_window * (1.0 - overlap_fraction),
-            frac_dyn_range=self._frac_dyn_range, color_map=self._color_map
+            frac_dyn_range=self._frac_dyn_range, color_map=self._color_map,
+            frequency_guide=self._frequency_guide
         )
         log.debug("request_data_next: Complete")
 
@@ -166,7 +169,8 @@ class Presenter:
         self.request_data_time_range(
             time_start=self._time_start - time_window * (1.0 - overlap_fraction),
             time_end=self._time_end - time_window * (1.0 - overlap_fraction),
-            frac_dyn_range=self._frac_dyn_range, color_map=self._color_map
+            frac_dyn_range=self._frac_dyn_range, color_map=self._color_map,
+            frequency_guide=self._frequency_guide
         )
         log.debug("request_data_prev: Complete")
 

@@ -109,7 +109,7 @@ def main():
         time_end=date_end, 
         frac_dyn_range=arguments.frac_dyn_range, 
         color_map=arguments.color_map,
-        frequency_guide=(arguments.frequency_guide if arguments.frequency_guide else None))
+        frequency_guide=arguments.frequency_guide)
 
     presenter.run()
 
