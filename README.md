@@ -19,9 +19,9 @@ spacelabel [-h] [-s SPACECRAFT] FILE DATE DATE
 ```
 
 **Positional arguments:**
-* `FILE`: The name of the `.hdf5` file to analyse. 
+* `FILE`: The name of the `.hdf5` or `.cdf` file to analyse. 
   It must be in the format outlined in the [data_dictionary](docs/data_dictionary.md); three (or more) columns!
-* `DATE`: The window of days to plot, in ISO YYYY-MM-DD format, e.g. '2003-12-1 2003-12-31' for December 2003.
+* `DATE`: The window of days to plot, in ISO YYYY-MM-DD format, e.g. '2003-12-01 2003-12-31' for December 2003.
   The data will be scrolled through in blocks of this window's width.
 
 **Optional arguments:**
@@ -31,6 +31,11 @@ spacelabel [-h] [-s SPACECRAFT] FILE DATE DATE
 * `-f FREQUENCY`: How many log-space frequency bins to rebin the data to. Overrides any default for the spacecraft.
 * `-t TIME_MINIMUM`: How small the minimum time bin should be, in seconds. This must be an even multiple of the current 
   time bins, e.g. a file with 1s time bins could have a minimum time bin of 15s.
+* `-frac_dyn_range FRAC_DYN_RANGE FRAC_DYN_RANGE`: The minimum and maximum fraction of the flux to be display in the dynamic range (by default: 0.05 0.95)
+* `-cmap CMAP`: The name of the color map that will be used for the intensity plot (by default: viridis)
+* `-g [FREQUENCY_GUIDE [FREQUENCY_GUIDE ...]]`: Creates horizontal line(s) at specified frequencies to aid with labeling. Lines can be toggled using check boxes.
+* `--not_verbose`: If not_verbose is called, the debug log will not be printed. By default: verbose mode
+
 
 The code will attempt to identify which spacecraft the data file format corresponds to, and read the file intelligently.
 If it can't fit one of them, it will prompt the user to create a new spacecraft configuration file.
