@@ -146,7 +146,7 @@ class ViewMatPlotLib(View):
 
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
-            frac_dyn_range: Dict[float,float], #color_map: str,
+            frac_dyn_range: Dict[float,float], color_map: str,
             features: Optional[List[Feature]]
     ):
         """
@@ -169,12 +169,12 @@ class ViewMatPlotLib(View):
                 vmin: float = numpy.quantile(values[values > 0.], frac_dyn_range[0])
                 vmax: float = numpy.quantile(values[values > 0.], frac_dyn_range[-1])
                 norm: Optional[LogNorm] = LogNorm(vmin=vmin, vmax=vmax)
+            
 
             image = self._ax_data[measurement].pcolormesh(
                 # Clip to avoid white spots, transpose as data is time-major not frequency-major
                 time, freq, values.clip(min=1e-31).T if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else values.T,
-                #cmap=color_map if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
-                cmap='viridis' if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
+                cmap=color_map if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
                 norm=norm,
                 shading='auto'
             )

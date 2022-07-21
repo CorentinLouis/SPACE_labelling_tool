@@ -24,7 +24,7 @@ class Presenter:
     _time_start: Time = None
     _time_end: Time = None
     _frac_dyn_range: Dict[float, float] = None
-    #_color_map: str = None
+    _color_map: str = None
     _measurements: Optional[List[str]] = None
 
     def __init__(
@@ -91,7 +91,7 @@ class Presenter:
             time_start: Time,
             time_end: Time,
             frac_dyn_range: Dict[float, float],
-            #color_map = str,
+            color_map = str,
             overlap_fraction: float = OVERLAP_FRACTION
     ):
         """
@@ -106,7 +106,7 @@ class Presenter:
         self._time_start = time_start
         self._time_end = time_end
         self._frac_dyn_range = frac_dyn_range
-       # self._color_map = color_map
+        self._color_map = color_map
 
         time, freq, data = self._dataset.get_data_for_time_range(
             time_start, time_end, measurements=self._measurements
@@ -118,7 +118,7 @@ class Presenter:
         self._view.draw_data(
             time, freq, data, self._dataset.get_units(),
             frac_dyn_range=frac_dyn_range,
-           # color_map = color_map,
+            color_map = self._color_map,
             features=features
         )
         log.debug(f"request_data_time_range: Complete")
@@ -134,7 +134,7 @@ class Presenter:
         self.request_data_time_range(
             time_start=self._time_start + time_window * (1.0 - overlap_fraction),
             time_end=self._time_end + time_window * (1.0 - overlap_fraction),
-            frac_dyn_range=self._frac_dyn_range#, color_map=self._color_map
+            frac_dyn_range=self._frac_dyn_range, color_map=self._color_map
         )
         log.debug("request_data_next: Complete")
 
@@ -149,7 +149,7 @@ class Presenter:
         self.request_data_time_range(
             time_start=self._time_start - time_window * (1.0 - overlap_fraction),
             time_end=self._time_end - time_window * (1.0 - overlap_fraction),
-            frac_dyn_range=self._frac_dyn_range#, color_map=self._color_map
+            frac_dyn_range=self._frac_dyn_range, color_map=self._color_map
         )
         log.debug("request_data_prev: Complete")
 

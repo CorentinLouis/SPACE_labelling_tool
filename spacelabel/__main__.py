@@ -49,6 +49,10 @@ def main():
         help="The minimum and maximum fraction of the flux to be display in the dynamic range"
     )
     parser.add_argument(
+        '-cmap', type=str, dest='color_map', metavar = 'CMAP', default='viridis',
+        help="The name of the color map that will be used for the intensity plot"
+    )
+    parser.add_argument(
         '--not_verbose', dest='not_verbose', action='store_false',
         help="If not_verbose is called, the debug log will not be printed. By default: verbose mode"
     )
@@ -90,11 +94,10 @@ def main():
         frequency_resolution=(arguments.frequency_resolution[0] if arguments.frequency_resolution else None),
         time_minimum=(arguments.time_minimum[0] if arguments.time_minimum else None)
     )
-
     view: ViewMatPlotLib = ViewMatPlotLib(log_level=logging.INFO)
     presenter: Presenter = Presenter(dataset, view, log_level=logging.INFO)
     presenter.request_measurements()
-    presenter.request_data_time_range(time_start=date_start, time_end=date_end, frac_dyn_range=arguments.frac_dyn_range)
+    presenter.request_data_time_range(time_start=date_start, time_end=date_end, frac_dyn_range=arguments.frac_dyn_range, color_map=arguments.color_map)
     presenter.run()
 
 

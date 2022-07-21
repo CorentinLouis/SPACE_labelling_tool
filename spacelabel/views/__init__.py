@@ -58,6 +58,7 @@ class View(ABC):
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
             frac_dyn_range: Dict[float,float],
+            color_map: str,
             features: Optional[List[Feature]]
     ):
         """
