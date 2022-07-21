@@ -150,6 +150,7 @@ class DataSet(ABC):
 
                 self._time = time_rescaled
 
+
         if frequency_resolution:
             freq_original: ndarray = self._freq
             freq_rescaled: ndarray = 10 ** (
@@ -193,9 +194,7 @@ class DataSet(ABC):
                     self._data[name] = measurement_new
 
             self._freq = freq_rescaled
-
-        
-
+            
         if time_minimum or frequency_resolution:
             self.save_to_hdf()
 
