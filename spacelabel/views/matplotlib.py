@@ -14,10 +14,10 @@ from matplotlib.backend_bases import MouseEvent
 from matplotlib.colors import LogNorm
 from matplotlib.dates import DateFormatter, num2julian
 from matplotlib.figure import Figure
-from matplotlib.pyplot import ion, figure, close, pause, show
-from matplotlib.widgets import PolygonSelector, Button
+from matplotlib.pyplot import ion, figure, close, pause, show, plot, axes
+from matplotlib.widgets import PolygonSelector, Button, CheckButtons
 from numpy import ndarray
-
+import matplotlib.patheffects as PathEffects
 from spacelabel.models.feature import Feature
 from spacelabel.views import View, SHOULD_MEASUREMENT_BE_LOG
 
@@ -41,11 +41,16 @@ class ViewMatPlotLib(View):
     _ax_prev: Axes = None
     _ax_next: Axes = None
     _ax_save: Axes = None
+    _ax_1d: Axes = None
     _feature_name: str = None
     _selector: Dict[str, PolygonSelector] = None
     _button_next: Button = None
     _button_prev: Button = None
     _button_save: Button = None
+    _button_1d: Button = None
+    _lines: List[plot] = None
+    _labels: List[str] = None       
+
 
     def __init__(self, log_level: Optional[int] = None):
         """
@@ -144,6 +149,39 @@ class ViewMatPlotLib(View):
             choices=measurements
         )
 
+    def draw_1d_data(self, time: Time, data: Dict[str, ndarray], units: Optional[Dict[str, str]], frequency_guide: None, frequency_guide_units):
+        time = time.datetime64
+        lines = []
+        labels = []
+        set_visible = []
+        for name, measurement in data.items(): 
+            p = plot(time, measurement, color = "white", linestyle = "dashed")
+            lines.append(p)
+            labels.append(name)
+            set_visible.append(True)
+        if frequency_guide:
+           for value in frequency_guide:
+               print(value)
+               p = plot(time, numpy.repeat(float(value), len(time)), color = "white", linestyle = "dashed")
+               lines.append(p)
+               labels.append(str(value)+frequency_guide_units)
+               set_visible.append(True)
+        
+
+        self._lines = numpy.reshape(lines, -1)
+        self._labels = labels         
+        
+        # xposition, yposition, width and height
+        self._ax_1d = self._fig.add_axes([0.85, 0.0, 0.1, 0.1])
+        self._button_1d = CheckButtons(self._ax_1d, labels, set_visible)
+        self._button_1d.on_clicked(self._event_button_1d)
+
+
+    def _event_button_1d(self, event: MouseEvent):
+        index = self._labels.index(event)
+        self._lines[index].set_visible(not self._lines[index].get_visible())
+
+
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
             frac_dyn_range: Dict[float,float], color_map: str,
@@ -161,7 +199,8 @@ class ViewMatPlotLib(View):
 
         # Convert the time from Astropy Time to numpy datetimes, which matplotlib can take in
         time = time.datetime64
-
+        
+        
         for measurement, values in data.items():
             if not SHOULD_MEASUREMENT_BE_LOG.get(measurement, True):
                 norm: Optional[LogNorm] = None
@@ -251,11 +290,14 @@ class ViewMatPlotLib(View):
         for axis in self._ax_data.values():
             axis.fill(
                 time_datetime, frequency,
-                edgecolor='salmon',
+
+                edgecolor='tomato',
                 linestyle='--', linewidth=1.5,
                 alpha=0.75, fill=False
             )
-            axis.text(time_mean, frequency_mean, name, color='salmon')
+            txt = axis.text(time_mean, frequency_mean, name, color = "tomato", fontfamily = 'sans-serif', size=12)
+            #txt.set_path_effects([PathEffects.withStroke(linewidth=1.25, foreground='k'),
+            #           PathEffects.Normal()])
 
     def _create_polyselector(self):
         """
@@ -271,7 +313,7 @@ class ViewMatPlotLib(View):
             self._selector[measurement] = PolygonSelector(
                 axis, onselect=self._event_selected, useblit=USE_BLIT,
                 lineprops={
-                    'color': 'k', 'linestyle': '--', 'linewidth': 1.5, 'alpha': 0.75
+                    'color': 'tomato', 'linestyle': '--', 'linewidth': 1.5, 'alpha': 0.75
                 }
             )
         log.debug("_create_polyselector: Complete")
@@ -314,7 +356,6 @@ class ViewMatPlotLib(View):
                     vertex[1] 
                 ) for vertex in vertexes
             ]
-
 
             feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name, crop_to_bounds = True)
             self._draw_fill(*feature.arrays(), feature._name) # Make sure the feature is drawn on all other panels of the plot

@@ -65,3 +65,13 @@ class View(ABC):
         Abstract method to draw the data and features provided
         """
         pass
+        
+    @abstractmethod
+    def draw_1d_data(
+            self, time: Time, data: Dict[str, ndarray], units: Dict[str, str], frequency_guide: None, frequency_guide_units: Dict[str, str]
+    ):
+        """
+        Abstract method to draw the 1d time series data
+        """
+        pass
+

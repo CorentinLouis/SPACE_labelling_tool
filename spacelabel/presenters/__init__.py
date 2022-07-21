@@ -4,8 +4,8 @@ from astropy.time import Time, TimeDelta
 from datetime import datetime, timedelta
 from numpy import datetime64
 from typing import List, Optional, Tuple, Dict
+import numpy
 from shapely.geometry import Polygon,box
-
 from spacelabel.models.dataset import DataSet
 from spacelabel.models.feature import Feature
 from spacelabel.views.matplotlib import ViewMatPlotLib
@@ -26,7 +26,7 @@ class Presenter:
     _frac_dyn_range: Dict[float, float] = None
     _color_map: str = None
     _measurements: Optional[List[str]] = None
-
+    _measurements_1d: Optional[List[str]] = None
     def __init__(
             self,
             dataset: DataSet, view: ViewMatPlotLib, measurements: Optional[List[str]] = None,
@@ -92,7 +92,8 @@ class Presenter:
             time_end: Time,
             frac_dyn_range: Dict[float, float],
             color_map = str,
-            overlap_fraction: float = OVERLAP_FRACTION
+            overlap_fraction: float = OVERLAP_FRACTION,
+            frequency_guide: float = None
     ):
         """
         Selects the data for the given time range, and draws it on the figure.
@@ -111,6 +112,10 @@ class Presenter:
         time, freq, data = self._dataset.get_data_for_time_range(
             time_start, time_end, measurements=self._measurements
         )
+        time, data_1d = self._dataset.get_1d_data_for_time_range(
+            time_start, time_end, measurements=self._measurements_1d
+        )
+        
         features: List[Feature] = self._dataset.get_features_for_time_range(
             time_start, time_end
         )
@@ -121,6 +126,18 @@ class Presenter:
             color_map = self._color_map,
             features=features
         )
+        
+        
+        self._view.draw_1d_data(
+            time, 
+            data_1d, 
+            self._dataset.get_units_1d(), 
+            (frequency_guide if frequency_guide else None),
+            self._dataset.get_units()["Frequency"]
+        )
+        
+
+        
         log.debug(f"request_data_time_range: Complete")
 
     def request_data_next(self, overlap_fraction: float = OVERLAP_FRACTION):

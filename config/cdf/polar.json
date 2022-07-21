@@ -1,15 +1,26 @@
 {
-  "time": "Epoch4",
-  "frequency": "Frequency4",
-  "measurements": {
+  "time": ["Epoch4", "Epoch4"],
+  "frequency": ["Frequency4", "Frequency5"],
+  "measurements": [
+  {
     "Flux": {
       "value": "SFR4A",
       "units": "V^{2} m^{-2} Hz^{-1}"
-    }
-  },
+    }}
+  ,
+    {
+    "Flux": {
+      "value": "SFR5A",
+      "units": "V^{2} m^{-2} Hz^{-1}"
+    }}
+  ],
   "preprocess": {
     "frequency_resolution": 64,
-    "time_minimum": 60
-  }
+    "time_minimum": 15
+  },
+  "other": [
+  {"value": "Fce", 
+  "time" : "Epochfc"}
+  ]
 }
 
