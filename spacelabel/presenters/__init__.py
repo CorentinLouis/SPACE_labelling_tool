@@ -93,7 +93,7 @@ class Presenter:
             time_end: Time,
             frac_dyn_range: Dict[float, float],
             color_map = str,
-            frequency_guide: float = None,
+            frequency_guide: List[float] = None,
             overlap_fraction: float = OVERLAP_FRACTION
     ):
         """
