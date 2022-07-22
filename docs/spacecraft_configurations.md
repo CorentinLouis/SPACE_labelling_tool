@@ -60,20 +60,24 @@ They are JSON-format files with following structure:
 
 ```json
 {
-  "time": "Variable name for the time axis, e.g. Epoch",
-  "frequency": "Variable name for the frequency axis, e.g. Frequency",
-  "measurements": {
-    "Flux": {
-      "value": "Variable name, e.g. 'Data'",
-      "background": "Variable name, e.g. 'Background'",
-      "conversion": "Float conversion factor, e.g. 0.002654418728 to get from V^2 m^-2 Hz^-1 to W m^-2 Hz^-1"
-      "units": "Units for this value after conversion in LaTeX form, e.g. 'W m^{-2} Hz^{-1}'"
+  "time": ["Variable name for the time axis, e.g. Epoch"],
+  "frequency": ["VVariable name for the frequency axis, e.g. Frequency"],
+  "measurements": [
+  {
+    "Display Name": {
+      "value": "Variable name for value of this measurement, e.g. Data",
+      "background": "Variable name for background for this measurement, e.g. Background (optional)",
+      "conversion": "Float conversion factor, e.g. 0.002654418728 to get from V^2 m^-2 Hz^-1 to W m^-2 Hz^-1 (optional)",
+      "units": "Units for this value after conversion in LaTeX form, e.g. 'W m^{-2} Hz^{-1}"
     }
-  },
+    }
+    ],
   "preprocess": {
-    "frequency_resolution": "Integer, the number of bins to rescale the frequency axis along e.g. 400 (optional)",
+    "frequency_resolution": "Integer, the number of bins to rescale the frequency axis along e.g. 400 (optional)",,
     "time_minimum": "Float, the number of seconds to rebin the time to (optional)"
-  }
+  },
+  "other": [  {"value": "1d Variable name", 
+  "time" : "Variable time"}]
 }
 ```
 
