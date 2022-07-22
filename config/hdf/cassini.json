@@ -1,0 +1,27 @@
+{
+  "time": {
+    "value": "t",
+    "units": "Day"
+  },
+  "frequency": {
+    "value": "f",
+    "units": "kHz"
+  },
+  "observer": "Cassini",
+  "measurements": {
+    "Flux density": {
+      "value": "s",
+      "units": "Wm^{-2}Hz^{-1}"
+    },
+    "Power": {
+      "value": "p",
+      "units": "W/sr"
+    },
+    "Degree of polarization": {
+      "value": "v"
+    }
+  },
+  "preprocess": {
+    "frequency_resolution": 200
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "time": {
+    "value": "Dataset name",
+    "units": "Units LaTeX"
+  },
+  "frequency": {
+    "value": "Dataset name",
+    "units": "Units LaTeX"
+  },
+  "observer": "Observer name",
+  "measurements": {
+    "Display Name": {
+      "value": "Dataset name",
+      "units": "Units LaTeX"
+    },
+    "Display Name 2": {
+      "value": "Dataset name",
+      "units": "Units LaTeX"
+    }
+  },
+  "preprocess": {
+    "frequency_resolution": 999,
+    "time_minimum": 999
+  }
+}
