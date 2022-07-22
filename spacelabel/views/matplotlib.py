@@ -161,7 +161,6 @@ class ViewMatPlotLib(View):
             set_visible.append(True)
         if frequency_guide:
            for value in frequency_guide:
-               print(value)
                p = plot(time, numpy.repeat(float(value), len(time)), color = "white", linestyle = "dashed")
                lines.append(p)
                labels.append(str(value)+frequency_guide_units)
