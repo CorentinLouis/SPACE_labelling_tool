@@ -15,5 +15,6 @@
     "frequency_resolution": 999,
     "time_minimum": 999
   },
-  "other": []
+  "other": [  {"value": "1d Variable name", 
+  "time" : "Variable time"}]
 }
