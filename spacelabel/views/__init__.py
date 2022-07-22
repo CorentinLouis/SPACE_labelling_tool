@@ -57,6 +57,7 @@ class View(ABC):
     @abstractmethod
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
+            data_1d: Dict[str, ndarray], frequency_guide: None,
             frac_dyn_range: Dict[float,float],
             color_map: str,
             features: Optional[List[Feature]]
@@ -68,7 +69,9 @@ class View(ABC):
         
     @abstractmethod
     def draw_1d_data(
-            self, time: Time, data: Dict[str, ndarray], units: Dict[str, str], frequency_guide: None, frequency_guide_units: Dict[str, str]
+            self, time: Time, data: Dict[str, ndarray],
+            #units: Dict[str, str],
+            frequency_guide: None, frequency_guide_units: Dict[str, str]
     ):
         """
         Abstract method to draw the 1d time series data

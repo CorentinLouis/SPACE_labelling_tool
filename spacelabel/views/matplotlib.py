@@ -38,10 +38,10 @@ class ViewMatPlotLib(View):
     _measurement_middle: str = None  # Important for axis labels
     _ax_cbar: Dict[str, Axes] = None
     _ax_data: Dict[str, Axes] = None
+    _ax_1d: Axes = None
     _ax_prev: Axes = None
     _ax_next: Axes = None
     _ax_save: Axes = None
-    _ax_1d: Axes = None
     _feature_name: str = None
     _selector: Dict[str, PolygonSelector] = None
     _button_next: Button = None
@@ -149,41 +149,54 @@ class ViewMatPlotLib(View):
             choices=measurements
         )
 
-    def draw_1d_data(self, time: Time, data: Dict[str, ndarray], units: Optional[Dict[str, str]], frequency_guide: None, frequency_guide_units):
-        time = time.datetime64
+    def draw_1d_data(self, time: Time, data: Dict[str, ndarray],
+                     panels: None,
+                     #units: Optional[Dict[str, str]],
+                     frequency_guide: None, frequency_guide_units: Dict[str,str]
+    ):
+        #time = time.datetime64
+        
         lines = []
         labels = []
         set_visible = []
-        for name, measurement in data.items(): 
-            p = plot(time, measurement, color = "white", linestyle = "dashed")
-            lines.append(p)
-            labels.append(name)
-            set_visible.append(True)
-        if frequency_guide:
-           for value in frequency_guide:
-               print(value)
-               p = plot(time, numpy.repeat(float(value), len(time)), color = "white", linestyle = "dashed")
-               lines.append(p)
-               labels.append(str(value)+frequency_guide_units)
-               set_visible.append(True)
-        
-
-        self._lines = numpy.reshape(lines, -1)
-        self._labels = labels         
         
         # xposition, yposition, width and height
-        self._ax_1d = self._fig.add_axes([0.85, 0.0, 0.1, 0.1])
+        self._ax_1d = self._fig.add_axes([0.85, 0.0, 0.2, 0.1])
+        
+        
+        for name, measurement in data.items(): 
+            labels.append(name)
+            for i_panel in panels:
+                p = self._ax_data[i_panel].plot(time, measurement, color = "white", linestyle = "dashed")
+                lines.append(p)
+                set_visible.append(True)
+
+        if frequency_guide:
+            for value in frequency_guide:
+                labels.append(str(value)+" "+frequency_guide_units["Frequency"])
+                for i_panel in panels:
+                    p = self._ax_data[i_panel].plot(time, numpy.repeat(float(value), len(time)), color = "white", linestyle = "dashed")
+                    lines.append(p)
+                    set_visible.append(True)
+                    self._lines = numpy.reshape(lines, -1)
+                    self._labels = labels
+        
         self._button_1d = CheckButtons(self._ax_1d, labels, set_visible)
         self._button_1d.on_clicked(self._event_button_1d)
 
 
     def _event_button_1d(self, event: MouseEvent):
+        n_panels = len(self._ax_data)
+        n_lines = len(self._lines)/n_panels
         index = self._labels.index(event)
-        self._lines[index].set_visible(not self._lines[index].get_visible())
+
+        for ind_index in range(0,n_panels):
+            self._lines[int(index+ind_index*n_lines)].set_visible(not self._lines[int(index+ind_index*n_lines)].get_visible())
 
 
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
+            data_1d: Dict[str, ndarray], frequency_guide: None,
             frac_dyn_range: Dict[float,float], color_map: str,
             features: Optional[List[Feature]]
     ):
@@ -199,7 +212,6 @@ class ViewMatPlotLib(View):
 
         # Convert the time from Astropy Time to numpy datetimes, which matplotlib can take in
         time = time.datetime64
-        
         
         for measurement, values in data.items():
             if not SHOULD_MEASUREMENT_BE_LOG.get(measurement, True):
@@ -217,6 +229,8 @@ class ViewMatPlotLib(View):
                 norm=norm,
                 shading='auto'
             )
+            
+
             self._ax_data[measurement].set_xlim(time[0], time[-1])
             self._ax_data[measurement].set_ylim(freq[0]-0.1*freq[0], freq[-1]+0.1*freq[-1]) # Frequency limits enlarge, to be able to draw polygon on the edge of the plotting window
             self._ax_data[measurement].set_yscale('log')
@@ -253,6 +267,14 @@ class ViewMatPlotLib(View):
                     )
                 ) + ("\n"+fr"(${units[measurement]}$)" if units[measurement] else ""),
                 fontsize=FONT_SIZE
+            )
+        
+        self.draw_1d_data(
+                time, 
+                data_1d,
+                list(data.keys()),
+                frequency_guide,
+                units
             )
 
         if features:

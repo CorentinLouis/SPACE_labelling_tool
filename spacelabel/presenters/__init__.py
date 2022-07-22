@@ -123,22 +123,12 @@ class Presenter:
         )
 
         self._view.draw_data(
-            time, freq, data, self._dataset.get_units(),
+            time, freq, data, self._dataset.get_units(), # data from the preprocessed file
+            data_1d, self._frequency_guide, #optionnal 1D data from either the preprocessed file or the -g arugment
             frac_dyn_range=frac_dyn_range,
             color_map = self._color_map,
             features=features
         )
-        
-        
-        self._view.draw_1d_data(
-            time, 
-            data_1d, 
-            self._dataset.get_units_1d(), 
-            self._frequency_guide,
-            self._dataset.get_units()["Frequency"]
-        )
-        
-
         
         log.debug(f"request_data_time_range: Complete")
 
