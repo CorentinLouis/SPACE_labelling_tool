@@ -154,44 +154,57 @@ class ViewMatPlotLib(View):
                      #units: Optional[Dict[str, str]],
                      frequency_guide: None, frequency_guide_units: Dict[str,str]
     ):
-        #time = time.datetime64
-        
+      
+        # initiating the lines, labels and set_visible that will be necessary to create the buttons
         lines = []
         labels = []
         set_visible = []
-        
-        # xposition, yposition, width and height
-        self._ax_1d = self._fig.add_axes([0.85, 0.0, 0.2, 0.1])
-        
-        
-        for name, measurement in data.items(): 
-            labels.append(name)
-            for i_panel in panels:
+
+
+        for i_panel in panels:
+            for name, measurement in data.items():
+                if i_panel == panels[0]:
+                    labels.append(name)
+                    set_visible.append(True)
+
                 p = self._ax_data[i_panel].plot(time, measurement, color = "white", linestyle = "dashed")
                 lines.append(p)
-                set_visible.append(True)
-
-        if frequency_guide:
-            for value in frequency_guide:
-                labels.append(str(value)+" "+frequency_guide_units["Frequency"])
-                for i_panel in panels:
-                    p = self._ax_data[i_panel].plot(time, numpy.repeat(float(value), len(time)), color = "white", linestyle = "dashed")
-                    lines.append(p)
-                    set_visible.append(True)
-                    self._lines = numpy.reshape(lines, -1)
-                    self._labels = labels
         
+        if frequency_guide:
+            for i_panel in panels:
+                for value in frequency_guide:
+                    # To have only one button per element in frequency_guide,
+                    # no matter how many panels there are,
+                    # we want to be able to count the number of panels
+                    if i_panel == panels[0]:
+                        labels.append(str(value)+" "+frequency_guide_units["Frequency"])
+                        set_visible.append(True)
+                
+                    p = self._ax_data[i_panel].plot(time, numpy.repeat(float(value), len(time)), color = "white", linestyle = "dashed", visible=True)
+                    lines.append(p)
+
+        self._labels = labels
+        set_visible = set_visible
+        self._lines = numpy.reshape(lines, -1)
+
+
+                    
+        
+                
+        # xposition, yposition, width and height
+        self._ax_1d = self._fig.add_axes([0.85, 0.0, 0.2, 0.1])
         self._button_1d = CheckButtons(self._ax_1d, labels, set_visible)
         self._button_1d.on_clicked(self._event_button_1d)
 
 
     def _event_button_1d(self, event: MouseEvent):
-        n_panels = len(self._ax_data)
-        n_lines = len(self._lines)/n_panels
+        n_panels = int(len(self._ax_data))
+        n_labels = int(len(self._labels))
         index = self._labels.index(event)
 
-        for ind_index in range(0,n_panels):
-            self._lines[int(index+ind_index*n_lines)].set_visible(not self._lines[int(index+ind_index*n_lines)].get_visible())
+        #self._lines[int(index)].set_visible(not self._lines[int(index)].get_visible())
+        for ind_panels in range(0,n_panels):
+            self._lines[int(index+ind_panels*n_labels)].set_visible(not self._lines[int(index+ind_panels*n_labels)].get_visible())
 
 
     def draw_data(
