@@ -41,30 +41,36 @@ class DataSetCDF(DataSet):
         :param config_name: If a config name was passed, what is it?
         """
         configs: Dict[str, dict] = {}
+        configs_file_name: List[str] = {}
         # Scan the configs directory for entries
         for config_file in (Path(__file__).parent.parent.parent.parent / 'config' / 'cdf').glob('*.json'):
             configs[config_file.stem] = json.load(config_file.open())
+            configs_file_name[config_file.stem] = config_file
+    
+
 
         if config_name:
             # If there was a config requested, get it!
-            if config_name not in configs.keys():
+            if config_name[0] not in configs_file_name.keys():
+            #if config_name not in configs.keys():
                 raise KeyError(
-                    f"Requested a non-existent configuration '{config_name}'. "
+                    f"Requested a non-existent configuration '{config_name[0]}'. "
                     f"Configurations are: {', '.join(configs.keys())}"
                 )
 
             # Let's check the required columns from the config - do they all exist in the file?
-            config = configs[config_name]
-            config_columns = [config['time'], config['frequency']]
+            config = configs[config_name[0]]
+            #config_columns = [config['time'], config['frequency']]
+            config_columns = [t for t in config['time']] + [f for f in config['frequency']]
             for receiver in config['measurements']:
                 for measurement in receiver.values():
                         config_columns.append(measurement['value'])
                         if measurement.get('background', None):
                             config_columns.append(measurement['background'])
-
+            print(config_columns)
             if not set(config_columns).intersection(set(columns)):
                 raise KeyError(
-                    f"Requested configuration '{config_name}' does not describe the input file. "
+                    f"Requested configuration '{config_name[0]}' does not describe the input file. "
                     f"Configuration file requires columns {', '.join(config_columns)}, "
                     f"but the file only contains the columns {', '.join(columns)}."
                 )
@@ -84,9 +90,10 @@ class DataSetCDF(DataSet):
                         config_columns.append(measurement['value'])
                         if measurement.get('background', None):
                             config_columns.append(measurement['background'])
-
-                if set(config_columns).intersection(set(columns)):
+                if not set(config_columns) - set(columns):
+                #if set(config_columns).intersection(set(columns)):
                     valid_configs.append(config_entry)
+
             print("####### valid config is: ##########")
             print(valid_configs)
             if not valid_configs:
