@@ -1,0 +1,18 @@
+{
+  "time": ["Epoch"],
+  "frequency": ["Frequency_RAD2"],
+  "measurements": [
+  {
+    "Flux": {
+      "value": "E_VOLTAGE_RAD2",
+      "units": "V^{2} m^{-2} Hz^{-1}"
+    }
+  }
+  ],
+  "preprocess": {
+    "frequency_resolution": 0,
+    "time_minimum": 0
+  },
+  "other": []
+}
+
