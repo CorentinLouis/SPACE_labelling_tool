@@ -73,7 +73,7 @@ space_label.py cassini_data.hdf5 2006-02-10 2006-02-11 -g 600
 ```
 Will load the file `cassini_data.hdf5`, and prompt the user to select which measurements to display:
 
-![Example starting window](docs/images/select-measurements.png)
+![Example starting window](docs/source/images/select-measurements.png)
 
 Once selected, the radio observations will be displayed
 for the time window 10/2/2006 to 11/2/2006:
