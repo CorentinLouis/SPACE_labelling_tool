@@ -1,6 +1,7 @@
 # SPACE Labelling Tool V2.0.0
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6886528.svg)](https://doi.org/10.5281/zenodo.6886528)
+[![Documentation Status](https://readthedocs.org/projects/expres/badge/?version=latest)](https://space-labelling-tool.readthedocs.io/en/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Utility to allow for identification of radio features from spacecraft observations via a GUI.
