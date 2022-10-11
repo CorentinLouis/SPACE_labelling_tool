@@ -23,9 +23,7 @@ SPACE is part of the `MASER <https://maser.lesia.obspm.fr>`_ (Measuring Analyzin
    spacecraft_configurations
    limitations
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+   :caption: Appendinx
+   
+   genindex
