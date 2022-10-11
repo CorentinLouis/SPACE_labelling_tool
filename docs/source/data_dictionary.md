@@ -40,6 +40,6 @@ And the following global attributes:
 
 ## Outputs
 
-### TFcat `.json` Files
+### TFcat `json` Files
 The code writes the selected features to file in [TFCat format](https://doi.org/10.25935/6068-8528), in the same directory as the input file
 and with the same root filename (e.g. `my_data/Cassini.hdf5` will produce a `my_data/Cassini.json`).
