@@ -24,7 +24,7 @@ spacelabel [-h] [-s SPACECRAFT] FILE DATE DATE
 
 **Positional arguments:**
 * `FILE`: The name of the `.hdf5` or `.cdf` file to analyse. 
-  It must be in the format outlined in the [data_dictionary](docs/data_dictionary.md); three (or more) columns!
+  It must be in the format outlined in the [data_dictionary](docs/source/data_dictionary.md); three (or more) columns!
 * `DATE`: The window of days to plot, in ISO YYYY-MM-DD format, e.g. '2003-12-01 2003-12-31' for December 2003.
   The data will be scrolled through in blocks of this window's width.
 
@@ -101,9 +101,9 @@ Will first load the file `polar_data.cdf`, processed it into `hdf5` file (accord
 ## Documentation
 
 Spacecraft configuration files are stored in the `config/` directory in JSON format. 
-For more info on how to create a new one, see [spacecraft configurations](docs/spacecraft_configurations.md).
+For more info on how to create a new one, see [spacecraft configurations](docs/source/spacecraft_configurations.md).
 
-Information on the file formats this program inputs and outputs can be found in the [data dictionary](docs/data_dictionary.md).
+Information on the file formats this program inputs and outputs can be found in the [data dictionary](docs/source/data_dictionary.md).
 
 ## Limitations & Future Work
 
