@@ -17,6 +17,7 @@ SPACE is part of the `MASER <https://maser.lesia.obspm.fr>`_ (Measuring Analyzin
 
    installation
    quickstart
+   usage_examples
    data_dictionary
    developer_documentation
    spacecraft_configurations
