@@ -2,7 +2,8 @@
 
 ## Local installation
 
-SPACE can be downloaded from: `<https://github.com/CorentinLouis/SPACE_labelling_tool/>`_ or `<https://doi.org/10.5281/zenodo.6886528>`_
+[Link display text - URL](http://example.com/)
+SPACE can be downloaded from [GitHub](https://github.com/CorentinLouis/SPACE_labelling_tool/>) or from [zenodo](https://doi.org/10.5281/zenodo.6886528>).
 
 Clone this repository, and then install it in 'editable' mode as:
 
