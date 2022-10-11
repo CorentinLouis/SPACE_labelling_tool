@@ -32,7 +32,7 @@ The code will attempt to identify which spacecraft the data file format correspo
 If it can't fit one of them, it will prompt the user to create a new spacecraft configuration file.
 In the case of a file matching multiple spacecraft formats, the user is prompted to select one.
 
-### GUI
+## GUI
 
 Once the file has loaded, it launches a GUI for selecting the measurements within the file to display, 
 and then to navigate the data selected. 
