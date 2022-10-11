@@ -1,8 +1,7 @@
 # Installation Guide
 
-# Local installation
+## Local installation
 
-## Getting Started
 SPACE can be downloaded from: https://github.com/CorentinLouis/SPACE_labelling_tool/ or https://doi.org/10.5281/zenodo.6886528
 
 Clone this repository, and then install it in 'editable' mode as:
@@ -16,8 +15,7 @@ Installing in editable mode will allow the scripts to read any new or modified v
 
 Running the code requires to install other software, as described below.
 
-Required software
------------------
+## Required software
 
 Python
 +++
