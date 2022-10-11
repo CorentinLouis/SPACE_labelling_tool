@@ -1,8 +1,6 @@
-Installation Guide
-=========================
+# Installation Guide
 
-Local installation
-------------------
+#Local installation
 
 ## Getting Started
 SPACE can be downloaded from: https://github.com/CorentinLouis/SPACE_labelling_tool/ or https://doi.org/10.5281/zenodo.6886528
