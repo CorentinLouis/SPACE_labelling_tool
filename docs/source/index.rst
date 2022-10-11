@@ -12,7 +12,7 @@ The SPectrogram Analysis and Cataloguing Environment (SPACE) tool is an interact
 SPACE is part of the `MASER <https://maser.lesia.obspm.fr>`_ (Measuring Analyzing & Simulating Emissions in Radio frequencies) project. 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    installation
