@@ -30,4 +30,4 @@ Models also exist for the polygons stored on a plot. These should not need modif
 
 ## View
 
-This is the bit 
+This is the GUI for presenting the data. 
