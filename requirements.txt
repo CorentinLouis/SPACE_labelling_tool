@@ -1,4 +1,4 @@
-astropy>=5.0.1
+astropy>=5.1
 attrs>=21.2.0
 cdflib>=0.4.4
 Cython
