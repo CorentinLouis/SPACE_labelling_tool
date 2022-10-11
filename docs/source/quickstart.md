@@ -2,6 +2,8 @@
 
 This section presents a concise user's guide to ExPRES.
 
+
+## Quickstart
 To start the code, the following command needs to be run:
 ```shell
 spacelabel [-h] [-s SPACECRAFT] FILE DATE DATE
