@@ -21,6 +21,7 @@ SPACE is part of the `MASER <https://maser.lesia.obspm.fr>`_ (Measuring Analyzin
    data_dictionary
    developer_documentation
    spacecraft_configurations
+   limitations
 
 Indices and tables
 ==================
