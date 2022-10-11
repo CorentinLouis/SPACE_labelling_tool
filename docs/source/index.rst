@@ -10,7 +10,9 @@ Welcome to SPACE_labelling_tool's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   data_dictionary
+   developer_documentation
+   spacecraft_configurations
 
 Indices and tables
 ==================
