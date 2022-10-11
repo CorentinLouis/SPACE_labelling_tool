@@ -2,9 +2,9 @@
 
 ## Inputs
 
-### `.hdf` Files
+### `.hdf5` Files
 
-Valid `.hdf` files for input to this code *must* contain the following columns. The names of these columns can vary,
+Valid `.hdf5` files for input to this code *must* contain the following columns. The names of these columns can vary,
 and the code's ability to understand them is defined by the [spacecraft configurations](spacecraft_configurations.md):
 
 * **Time (float, 1D):** The time of each observation. The time column is the index, and increases monotonically. 
@@ -41,5 +41,5 @@ And the following global attributes:
 ## Outputs
 
 ### TFcat `.json` Files
-The code writes the selected features to file in [TFCat format](https://gitlab.obspm.fr/maser/catalogues/tfcat/), in the same directory as the input file
+The code writes the selected features to file in [TFCat format](https://doi.org/10.25935/6068-8528), in the same directory as the input file
 and with the same root filename (e.g. `my_data/Cassini.hdf5` will produce a `my_data/Cassini.json`).

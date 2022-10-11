@@ -6,3 +6,4 @@
   Future work would involve re-saving provided data as `parquet` or other time-indexable files for partial loads
   using the Dask and XArray libraries.
 * Add configurations that load data directly from catalogues.
+* Use the SPACE labeling tool in a notebook (launch on Binder)
