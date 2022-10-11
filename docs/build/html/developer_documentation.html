@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Developer Documentation &mdash; SPACE_labelling_tool 2.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Spacecraft Configurations" href="spacecraft_configurations.html" />
+    <link rel="prev" title="Data Dictionary" href="data_dictionary.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> SPACE_labelling_tool
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="data_dictionary.html">Data Dictionary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_dictionary.html#inputs">Inputs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_dictionary.html#outputs">Outputs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Developer Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#model">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#view">View</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spacecraft_configurations.html">Spacecraft Configurations</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SPACE_labelling_tool</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Developer Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/developer_documentation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="developer-documentation">
+<h1>Developer Documentation<a class="headerlink" href="#developer-documentation" title="Permalink to this heading"></a></h1>
+<p>The SPACE Labelling Tool is designed using an object-oriented Model-View-Presenter structure.
+There are three components:</p>
+<ul class="simple">
+<li><p><strong>Model:</strong> This is the representation of the data, along with the methods required to access and modify it.</p></li>
+<li><p><strong>View:</strong> This is the GUI for presenting the data.</p></li>
+<li><p><strong>Presenter:</strong> This is the glue between the two, that takes requests from the <strong>View</strong>,
+collects data from the <strong>Model</strong>, and sends it back to the <strong>View</strong>. This allows for easy modularity.
+<em>The Model and View should never talk directly</em>.</p></li>
+</ul>
+<div class="section" id="model">
+<h2>Model<a class="headerlink" href="#model" title="Permalink to this heading"></a></h2>
+<p>The core part of the model, and the bit that is relevant to future expansion, is the <strong>DataSet</strong>.
+A <strong>DataSet</strong> holds one or more sets of data, along with the frequency and time axis data on them, and the data required
+to output them to <strong>TFCat</strong> JSON format. <strong>DataSet</strong> is an abstract class, that is extended for each new file type.</p>
+<p>For examples of new file types, look at the <span class="xref myst">HDF</span> and
+<span class="xref myst">CDF</span> implementations. A new <strong>DataSet</strong> for a new file type must include:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">exists_preprocessed</span></code>: A static method which checks to see if a pre-processed version of the file exists.
+If one exists, it will be <code class="docutils literal notranslate"><span class="pre">filename.preprocessed.hdf5</span></code>, where <code class="docutils literal notranslate"><span class="pre">filename</span></code> is set in <code class="docutils literal notranslate"><span class="pre">__init__</span></code> (see next!).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">__init__</span></code>: An initialization method which loads the time range from the file,
+so it can be validated against the time range the user requested without having to load the whole file.
+It also sets the <code class="docutils literal notranslate"><span class="pre">filename</span></code>. If it is <code class="docutils literal notranslate"><span class="pre">filename.csv</span></code> or similar, then when the code saves a preprocessed file
+or a <strong>TFCat</strong> JSON file, it will save it to <code class="docutils literal notranslate"><span class="pre">filename.preprocessed.hdf5</span></code>, <code class="docutils literal notranslate"><span class="pre">filename.json</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">load</span></code>: A method which loads the full contents of the data into memory.</p></li>
+</ul>
+<p>Models also exist for the polygons stored on a plot. These should not need modifying.</p>
+</div>
+<div class="section" id="view">
+<h2>View<a class="headerlink" href="#view" title="Permalink to this heading"></a></h2>
+<p>This is the bit</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="data_dictionary.html" class="btn btn-neutral float-left" title="Data Dictionary" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spacecraft_configurations.html" class="btn btn-neutral float-right" title="Spacecraft Configurations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Louis, C. K.; Jackman, C M.; Mangham, S. W.; Smith, K. D.; O&#39;Dwyer, E. P.; Empey, A.; Cecconi, B.; Zarka, P.; Maloney, S..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
