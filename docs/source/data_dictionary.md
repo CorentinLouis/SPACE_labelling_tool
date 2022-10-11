@@ -2,9 +2,9 @@
 
 ## Inputs
 
-### `.hdf5` Files
+### `hdf5` Files
 
-Valid `.hdf5` files for input to this code *must* contain the following columns. The names of these columns can vary,
+Valid `hdf5` files for input to this code *must* contain the following columns. The names of these columns can vary,
 and the code's ability to understand them is defined by the [spacecraft configurations](spacecraft_configurations.md):
 
 * **Time (float, 1D):** The time of each observation. The time column is the index, and increases monotonically. 
@@ -22,9 +22,9 @@ Some files will contain additional measurements as columns, for example:
 The code can cope with any number of additional 2-d measurement columns, but they must be defined in the 
 [spacecraft configurations](spacecraft_configurations.md) file.
 
-### `.cdf` File Collections
+### `cdf` File Collections
 
-Valid `.cdf` file collections are directories containing files with names in the format 
+Valid `cdf` file collections are directories containing files with names in the format 
 `stuff_[...]_stuff_YYYYMMDD_[???].cdf`. 
 The code will read the data from all files matching apart from the date, 
 and combine them into a single pre-processed data file that is saved in HDF5 format.
