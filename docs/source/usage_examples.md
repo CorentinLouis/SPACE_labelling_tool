@@ -30,4 +30,4 @@ space_label.py polar_data.cdf 2017-03-29 2017-03-30
 ```
 Will first load the file `polar_data.cdf`, processed it into `hdf5` file (according to the `polar.json` config file), and then radio observations will be displayed for the time window 26/03/1996 to 27/03/1996:
 
-![Example starting window](images/display-measurements_polar.png)
+![Example starting window](/images/display-measurements_polar.png)
