@@ -100,6 +100,8 @@ Will first load the file `polar_data.cdf`, processed it into `hdf5` file (accord
 ![Example starting window](docs/source/images/display-measurements_polar.png)
 ## Documentation
 
+Readthedocs documentation is accessible [here](https://space-labelling-tool.readthedocs.io/en/latest).
+
 Spacecraft configuration files are stored in the `config/` directory in JSON format. 
 For more info on how to create a new one, see [spacecraft configurations](docs/source/spacecraft_configurations.md).
 
