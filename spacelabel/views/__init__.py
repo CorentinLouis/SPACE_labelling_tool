@@ -60,6 +60,9 @@ class View(ABC):
             data_1d: Dict[str, ndarray], frequency_guide: None,
             frac_dyn_range: Dict[float,float],
             color_map: str,
+            color_features: str,
+            thickness_features: float,
+            size_features_name: float,
             features: Optional[List[Feature]]
     ):
         """

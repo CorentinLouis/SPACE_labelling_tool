@@ -53,6 +53,18 @@ def main():
         help="The name of the color map that will be used for the intensity plot"
     )
     parser.add_argument(
+        '-cfeatures', type=str, dest='color_features', metavar='CFEATURES', default='tomato',
+        help="The name of the colour for the saved features of interest polygons"
+    )
+    parser.add_argument(
+        '-thickness_features', type=float, dest='thickness_features', metavar='TFEATURES', default=2,
+        help="The thickness value for the saved features of interest polygons"
+    )
+    parser.add_argument(
+        '-size_features_name', type=float, dest='size_features_name', metavar='SFEATURESNAME', default=14,
+        help="The font size for the name of the saved features of interest polygons"
+    )
+    parser.add_argument(
         '-g', type=float, nargs='*', dest='frequency_guide', metavar="FREQUENCY_GUIDE", default=None,
         help="Draws horizontal line(s) on the visualisation at these specified frequencies to aid in interpretation of the plot."
              "Values must be in the same units as the data."
@@ -113,6 +125,9 @@ def main():
         time_end=date_end, 
         frac_dyn_range=arguments.frac_dyn_range, 
         color_map=arguments.color_map,
+        color_features=arguments.color_features,
+        thickness_features=arguments.thickness_features,
+        size_features_name = arguments.size_features_name,
         frequency_guide=arguments.frequency_guide)
 
     presenter.run()

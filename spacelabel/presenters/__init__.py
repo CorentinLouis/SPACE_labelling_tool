@@ -25,6 +25,9 @@ class Presenter:
     _time_end: Time = None
     _frac_dyn_range: Dict[float, float] = None
     _color_map: str = None
+    _color_features: str = None
+    _thickness_features: float = None
+    _size_features_neam: float = None
     _frequency_guide: Optional[List[float]] = None
     _measurements: Optional[List[str]] = None
     _measurements_1d: Optional[List[str]] = None
@@ -93,6 +96,9 @@ class Presenter:
             time_end: Time,
             frac_dyn_range: Dict[float, float],
             color_map = str,
+            color_features = str,
+            thickness_features = float,
+            size_features_name = float,
             frequency_guide: List[float] = None,
             overlap_fraction: float = OVERLAP_FRACTION
     ):
@@ -110,6 +116,9 @@ class Presenter:
         self._frac_dyn_range = frac_dyn_range
         self._frequency_guide = frequency_guide
         self._color_map = color_map
+        self._color_features = color_features
+        self._thickness_features = thickness_features
+        self._size_features_name = size_features_name
 
         time, freq, data = self._dataset.get_data_for_time_range(
             time_start, time_end, measurements=self._measurements
@@ -127,6 +136,9 @@ class Presenter:
             data_1d, self._frequency_guide, #optionnal 1D data from either the preprocessed file or the -g arugment
             frac_dyn_range=frac_dyn_range,
             color_map = self._color_map,
+            color_features = self._color_features,
+            thickness_features = self._thickness_features,
+            size_features_name = self._size_features_name,
             features=features
         )
         
@@ -144,6 +156,9 @@ class Presenter:
             time_start=self._time_start + time_window * (1.0 - overlap_fraction),
             time_end=self._time_end + time_window * (1.0 - overlap_fraction),
             frac_dyn_range=self._frac_dyn_range, color_map=self._color_map,
+            color_features=self._color_features,
+            thickness_features=self._thickness_features,
+            size_features_name = self._size_features_name,
             frequency_guide=self._frequency_guide
         )
         log.debug("request_data_next: Complete")
@@ -160,6 +175,9 @@ class Presenter:
             time_start=self._time_start - time_window * (1.0 - overlap_fraction),
             time_end=self._time_end - time_window * (1.0 - overlap_fraction),
             frac_dyn_range=self._frac_dyn_range, color_map=self._color_map,
+            color_features=self._color_features,
+            thickness_features=self._thickness_features,
+            size_features_name=self._size_features_name,
             frequency_guide=self._frequency_guide
         )
         log.debug("request_data_prev: Complete")

@@ -211,6 +211,9 @@ class ViewMatPlotLib(View):
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
             data_1d: Dict[str, ndarray], frequency_guide: None,
             frac_dyn_range: Dict[float,float], color_map: str,
+            color_features: str,
+            thickness_features: float,
+            size_features_name: float,
             features: Optional[List[Feature]]
     ):
         """
@@ -291,7 +294,7 @@ class ViewMatPlotLib(View):
             )
 
         if features:
-            self._draw_features(features)
+            self._draw_features(features, color_features, thickness_features, size_features_name)
 
         self._create_polyselector()
         # self._fig.show()
@@ -299,7 +302,7 @@ class ViewMatPlotLib(View):
 
         log.debug(f"draw_data: Complete [{len(freq)}x{len(time)}]")
 
-    def _draw_features(self, features: List[Feature]):
+    def _draw_features(self, features: List[Feature],color_features: str, thickness_features:float, size_features_name: float):
         """
         Plot the provided features on the map.
 
@@ -307,11 +310,11 @@ class ViewMatPlotLib(View):
         """
 
         for feature in features:
-            self._draw_fill(*feature.arrays(), feature._name)
+            self._draw_fill(*feature.arrays(), feature._name, color_features, thickness_features, size_features_name)
 
         log.debug(f"_draw_features: Drawn {len(features)}")
 
-    def _draw_fill(self, time: Time, frequency: ndarray, name: str):
+    def _draw_fill(self, time: Time, frequency: ndarray, name: str, color_features: str, thickness_features:float, size_features_name: float):
         """
         Plot a single feature on the map.
 
@@ -326,11 +329,11 @@ class ViewMatPlotLib(View):
             axis.fill(
                 time_datetime, frequency,
 
-                edgecolor='tomato',
-                linestyle='--', linewidth=1.5,
+                edgecolor=color_features,
+                linestyle='--', linewidth=thickness_features,
                 alpha=0.75, fill=False
             )
-            txt = axis.text(time_mean, frequency_mean, name, color = "tomato", fontfamily = 'sans-serif', size=12)
+            txt = axis.text(time_mean, frequency_mean, name, color = color_features, fontfamily = 'sans-serif', size=size_features_name)
             #txt.set_path_effects([PathEffects.withStroke(linewidth=1.25, foreground='k'),
             #           PathEffects.Normal()])
 
@@ -393,7 +396,7 @@ class ViewMatPlotLib(View):
             ]
 
             feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name, crop_to_bounds = True)
-            self._draw_fill(*feature.arrays(), feature._name) # Make sure the feature is drawn on all other panels of the plot
+            self._draw_fill(*feature.arrays(), feature._name, color_features) # Make sure the feature is drawn on all other panels of the plot
 
             log.info(f"_event_selected: New feature '{self._feature_name}'")
 
