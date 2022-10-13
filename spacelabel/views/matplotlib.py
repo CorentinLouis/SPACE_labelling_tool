@@ -296,7 +296,7 @@ class ViewMatPlotLib(View):
         if features:
             self._draw_features(features, color_features, thickness_features, size_features_name)
 
-        self._create_polyselector()
+        self._create_polyselector(color_features)
         # self._fig.show()
         show()  # `fig.show()` doesn't work
 
@@ -337,7 +337,7 @@ class ViewMatPlotLib(View):
             #txt.set_path_effects([PathEffects.withStroke(linewidth=1.25, foreground='k'),
             #           PathEffects.Normal()])
 
-    def _create_polyselector(self):
+    def _create_polyselector(self, color_features: str):
         """
         Generates a new polygon selector
         """
@@ -351,7 +351,7 @@ class ViewMatPlotLib(View):
             self._selector[measurement] = PolygonSelector(
                 axis, onselect=self._event_selected, useblit=USE_BLIT,
                 lineprops={
-                    'color': 'tomato', 'linestyle': '--', 'linewidth': 1.5, 'alpha': 0.75
+                    'color': color_features, 'linestyle': '--', 'linewidth': 1.5, 'alpha': 0.75
                 }
             )
         log.debug("_create_polyselector: Complete")
