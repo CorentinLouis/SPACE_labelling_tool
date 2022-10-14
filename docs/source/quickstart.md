@@ -1,6 +1,6 @@
 # Usage
 
-This section presents a concise user's guide to ExPRES.
+This section presents a concise user's guide to the SPACE labeling tool.
 
 
 ## Quickstart
