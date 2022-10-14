@@ -21,7 +21,7 @@ Running the code requires to install other software, as described below.
 Python
 +++
 
-The SPACE labeling tool code is running under `Python`. It has
-been developed and tested on Python version 3.8. This software must be installed for running the SPACE labeling tool code.
+The SPACE labelling tool code is running under `Python`. It has
+been developed and tested on Python version 3.8. This software must be installed for running the SPACE labelling tool code.
 
 
