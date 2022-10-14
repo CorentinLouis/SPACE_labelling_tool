@@ -43,6 +43,9 @@ class ViewMatPlotLib(View):
     _ax_next: Axes = None
     _ax_save: Axes = None
     _feature_name: str = None
+    _color_features: str = None
+    _thickness_features: float = None
+    _size_features_name: float = None
     _selector: Dict[str, PolygonSelector] = None
     _button_next: Button = None
     _button_prev: Button = None
@@ -226,6 +229,10 @@ class ViewMatPlotLib(View):
         """
         self._create_canvas(list(data.keys()))
 
+        self._color_features = color_features
+        self._thickness_features = thickness_features
+        self._size_features_name = size_features_name
+
         # Convert the time from Astropy Time to numpy datetimes, which matplotlib can take in
         time = time.datetime64
         
@@ -396,8 +403,8 @@ class ViewMatPlotLib(View):
             ]
 
             feature: Feature = self._presenter.register_feature(vertexes_jd_format, self._feature_name, crop_to_bounds = True)
-            self._draw_fill(*feature.arrays(), feature._name, color_features) # Make sure the feature is drawn on all other panels of the plot
+            self._draw_fill(*feature.arrays(), feature._name, self._color_features, self._thickness_features, self._size_features_name) # Make sure the feature is drawn on all other panels of the plot
 
             log.info(f"_event_selected: New feature '{self._feature_name}'")
 
-        self._create_polyselector()
+        self._create_polyselector(self._color_features)
