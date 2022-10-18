@@ -23,6 +23,7 @@ class Presenter:
     _view: ViewMatPlotLib = None
     _time_start: Time = None
     _time_end: Time = None
+    _fig_size: Tuple[float, float] = None
     _frac_dyn_range: Dict[float, float] = None
     _color_map: str = None
     _color_features: str = None
@@ -94,6 +95,7 @@ class Presenter:
             self,
             time_start: Time,
             time_end: Time,
+            fig_size: Tuple[float, float],
             frac_dyn_range: Dict[float, float],
             color_map = str,
             color_features = str,
@@ -113,6 +115,7 @@ class Presenter:
         log.debug("request_data_time_range: Started...")
         self._time_start = time_start
         self._time_end = time_end
+        self._fig_size = fig_size
         self._frac_dyn_range = frac_dyn_range
         self._frequency_guide = frequency_guide
         self._color_map = color_map
@@ -134,6 +137,7 @@ class Presenter:
         self._view.draw_data(
             time, freq, data, self._dataset.get_units(), # data from the preprocessed file
             data_1d, self._frequency_guide, #optionnal 1D data from either the preprocessed file or the -g arugment
+            fig_size= self._fig_size,
             frac_dyn_range=frac_dyn_range,
             color_map = self._color_map,
             color_features = self._color_features,
@@ -155,6 +159,7 @@ class Presenter:
         self.request_data_time_range(
             time_start=self._time_start + time_window * (1.0 - overlap_fraction),
             time_end=self._time_end + time_window * (1.0 - overlap_fraction),
+            fig_size=self._fig_size,
             frac_dyn_range=self._frac_dyn_range, color_map=self._color_map,
             color_features=self._color_features,
             thickness_features=self._thickness_features,
@@ -174,6 +179,7 @@ class Presenter:
         self.request_data_time_range(
             time_start=self._time_start - time_window * (1.0 - overlap_fraction),
             time_end=self._time_end - time_window * (1.0 - overlap_fraction),
+            fig_size=self._fig_size,
             frac_dyn_range=self._frac_dyn_range, color_map=self._color_map,
             color_features=self._color_features,
             thickness_features=self._thickness_features,

@@ -1,7 +1,7 @@
 import logging
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, TYPE_CHECKING, Optional
+from typing import Dict, List, Tuple, TYPE_CHECKING, Optional
 
 from astropy.time import Time
 from numpy import ndarray  # Imported separately for ease of Typing
@@ -58,6 +58,7 @@ class View(ABC):
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
             data_1d: Dict[str, ndarray], frequency_guide: None,
+            fig_size: Tuple[float, float],
             frac_dyn_range: Dict[float,float],
             color_map: str,
             color_features: str,

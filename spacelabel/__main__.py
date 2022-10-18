@@ -7,7 +7,7 @@ from astropy.time import Time
 from h5py import File
 from pathlib import Path
 
-from typing import Dict, Type
+from typing import Dict, Type, Tuple
 
 from spacelabel.models.dataset import DataSet
 from spacelabel.models.dataset.load import load_dataset, DATASET_TYPES
@@ -43,6 +43,10 @@ def main():
         '-t', type=int, nargs=1, dest='time_minimum', metavar="TIME_MINIMUM", default=None,
         help="The minimum width of time bin, in seconds, to rebin the data to. "
              "To override a spacecraft default with 'Do not rebin', set to 0."
+    )
+    parser.add_argument(
+        '-fig_size', type = float,  nargs = 2, dest = 'fig_size', metavar="FIGURE_SIZE", default=(15, 9),
+        help = "Size of the matplotlib figure"
     )
     parser.add_argument(
         '-frac_dyn_range', type=float, nargs=2, dest='frac_dyn_range', metavar="FRAC_DYN_RANGE", default=[0.05, 0.95],
@@ -123,6 +127,7 @@ def main():
     presenter.request_data_time_range(
         time_start=date_start, 
         time_end=date_end, 
+        fig_size=arguments.fig_size,
         frac_dyn_range=arguments.frac_dyn_range, 
         color_map=arguments.color_map,
         color_features=arguments.color_features,

@@ -23,7 +23,7 @@ from spacelabel.views import View, SHOULD_MEASUREMENT_BE_LOG
 
 log = logging.getLogger(__name__)
 
-FIGURE_SIZE: Tuple[float, float] = (15, 9)
+#FIGURE_SIZE: Tuple[float, float] = (15, 9)
 FONT_SIZE: float = 12.0
 FONT_SIZE_LARGE: float = 14.0
 USE_BLIT: bool = False  # When true, we get 1-5 second delays between *any* action
@@ -34,6 +34,7 @@ class ViewMatPlotLib(View):
     Class that handles the presentation of data in a single matplotlib figure and user interactions with it.
     """
     _fig: Figure = None
+    _fig_size: Tuple[float,float] = None
     _measurement_bottom: str = None  # Important for axis labels
     _measurement_middle: str = None  # Important for axis labels
     _ax_cbar: Dict[str, Axes] = None
@@ -83,7 +84,8 @@ class ViewMatPlotLib(View):
         """
         log.debug("_create_canvas: Starting...")
 
-        self._fig = figure(figsize=FIGURE_SIZE)
+        #self._fig = figure(figsize=FIGURE_SIZE)
+        self._fig = figure(figsize=self._fig_size)
         self._ax_prev = self._fig.add_axes([0.01, 0.91, 0.18, 0.08])
         self._ax_save = self._fig.add_axes([0.21, 0.91, 0.58, 0.08])
         self._ax_next = self._fig.add_axes([0.81, 0.91, 0.18, 0.08])
@@ -213,6 +215,7 @@ class ViewMatPlotLib(View):
     def draw_data(
             self, time: Time, freq: ndarray, data: Dict[str, ndarray], units: Dict[str, str],
             data_1d: Dict[str, ndarray], frequency_guide: None,
+            fig_size: Tuple[float, float],
             frac_dyn_range: Dict[float,float], color_map: str,
             color_features: str,
             thickness_features: float,
@@ -227,7 +230,9 @@ class ViewMatPlotLib(View):
         :param units:
         :param features: Features in the data time range, if any
         """
-        self._create_canvas(list(data.keys()))
+        self._fig_size = fig_size
+        self._create_canvas(list(data.keys()), )
+
 
         self._color_features = color_features
         self._thickness_features = thickness_features
