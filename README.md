@@ -41,7 +41,7 @@ spacelabel [-h] [-s SPACECRAFT] FILE DATE DATE
 * `-cfeatures CFEATURES`: The name of the colour for the saved features of interest polygons (by default: tomato)
 * `-thickness_features TFEATURES`: The thickness value for the saved features of interest polygons (by default: 2)
 * `-size_features_name SFEATURESNAME`: The font size for the name of the saved features of interest polygons (by default: 14)
-* `-g [FREQUENCY_GUIDE [FREQUENCY_GUIDE ...]]`: Creates horizontal line(s) at specified frequencies to aid with labeling. Lines can be toggled using check boxes.
+* `-g [FREQUENCY_GUIDE [FREQUENCY_GUIDE ...]]`: Draws horizontal line(s) on the visualisation at these specified frequencies to aid in interpretation of the plot.Values must be in the same units as the data.Lines can be toggled using check boxes.
 * `--not_verbose`: If not_verbose is called, the debug log will not be printed. By default: verbose mode
 
 
