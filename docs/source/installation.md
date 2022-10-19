@@ -13,6 +13,12 @@ pip install -e SPACE_labelling_tool
 ```
 Installing in editable mode will allow the scripts to read any new or modified versions of the configuration files.
 
+SPACE Labelling Tool is also direclty available from PyPi: https://pypi.org/project/SPACE-Labelling/
+
+```shell
+pip install SPACE-Labelling
+```
+
 
 Running the code requires to install other software, as described below.
 
