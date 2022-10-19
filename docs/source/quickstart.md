@@ -22,7 +22,7 @@ spacelabel [-h] [-s SPACECRAFT] FILE DATE DATE
 * `-f FREQUENCY`: How many log-space frequency bins to rebin the data to. Overrides any default for the spacecraft.
 * `-t TIME_MINIMUM`: How small the minimum time bin should be, in seconds. This must be an even multiple of the current 
   time bins, e.g. a file with 1s time bins could have a minimum time bin of 15s.
-* -`fig_size FIGURE_SIZE FIGURE_SIZE`: Size of the matplotlib figure
+* `-fig_size FIGURE_SIZE FIGURE_SIZE`: Size of the matplotlib figure
 * `-frac_dyn_range FRAC_DYN_RANGE FRAC_DYN_RANGE`: The minimum and maximum fraction of the flux to be display in the dynamic range (by default: 0.05 0.95)
 * `-cmap CMAP`: The name of the color map that will be used for the intensity plot (by default: viridis)
 * `-cfeatures CFEATURES`: The name of the colour for the saved features of interest polygons (by default: tomato)
