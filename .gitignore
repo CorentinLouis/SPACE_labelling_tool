@@ -1,5 +1,7 @@
 venv/
 cenv/
+build/
+dist/
 .idea/
 *.pyc
 *.ipynb-checkpoint
