@@ -20,7 +20,7 @@ Installing in editable mode will allow the scripts to read any new or modified v
 SPACE Labelling Tool is also directly available from PyPi: https://pypi.org/project/SPACE-Labelling/
 
 ```shell
-pip install SPACE-Labelling
+pip install space-labelling-tool
 ```
 
 
