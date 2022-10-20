@@ -76,6 +76,7 @@ There are the following interactive components:
 * **Prev/Next buttons:** These move through the data by an amount equal to the width of time range selected. 
   This will also overlap 1/4 of the current window as 'padding'.
 * **Save button:** This will save any features to TFcat JSON format, as `catalogue_{OBSERVER_NAME}.json`.
+* **Check boxes:** If the option `-g [FREQUENCY GUIDE [FREQUENCY GUIDE ...]]` has been enabled by the users to plot fixed frequency line(s) in the matplotlib window, or if a 1D variable is contained in the input data and configuration files check boxes will appear in the lower right hand corner of the figure to make the white dotted lines appear or disappear. 
 
 Once finished, you can save and then close the figure using the normal close button.
 
@@ -88,7 +89,7 @@ space_label.py cassini_data.hdf5 2006-02-10 2006-02-11 -g 600
 ```
 Will load the file `cassini_data.hdf5`, and prompt the user to select which measurements to display:
 
-![Example starting window](docs/source/images/select-measurements.png)
+![Example starting window](https://github.com/CorentinLouis/SPACE_labelling_tool/blob/master/docs/source/images/select-measurements.png?raw=True)
 
 Once selected, the radio observations will be displayed
 for the time window 10/2/2006 to 11/2/2006:
