@@ -15,6 +15,12 @@ for the time window 10/2/2006 to 11/2/2006:
 ![Example starting window](images/display-measurements_cassini.png)
 
 
+The user can then draw polygon in one panel. The Figure below show Intensity (top panel) and Polarization (bottom panel) data. At the top right of the top panel one can see a polygon that has just been drawn and closed, with the window for naming the feature appearing at the top left of the graphics window.  Features can be selected on any pane, and will be mirrored on all other panes once named.
+Other features have already been labelled, and appear in both intensity and polarisation views, with their names overlaid.
+
+![Example saving feature Cassini](https://github.com/CorentinLouis/SPACE_labelling_tool/blob/master/docs/source/images/save_features_cassini.png?raw=True)
+
+
 ## `cdf` file
 Calling the code as:
 ```shell
