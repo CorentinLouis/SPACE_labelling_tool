@@ -94,7 +94,7 @@ Will load the file `cassini_data.hdf5`, and prompt the user to select which meas
 Once selected, the radio observations will be displayed
 for the time window 10/2/2006 to 11/2/2006:
 
-![Example starting window](docs/source/images/display-measurements_cassini.png)
+![Example starting window](https://github.com/CorentinLouis/SPACE_labelling_tool/blob/master/docs/source/images/display-measurements_cassini.png?raw=True)
 
 
 * `cdf` file
@@ -104,7 +104,7 @@ space_label.py juno_data.cdf 2017-03-29 2017-03-30
 ```
 Will first load the file `juno_data.cdf`, processed it into `hdf5` file (according to the `juno.json` config file), and then radio observations will be displayed for the time window 29/03/2017 to 30/03/2017:
 
-![Example starting window](docs/source/images/display-measurements_juno.png)
+![Example starting window](https://github.com/CorentinLouis/SPACE_labelling_tool/blob/master/docs/source/images/display-measurements_juno.png?raw=True)
 
 An other example of a cdf file that also contains 1D data (displayed as a white-dashed line):
 ```shell
@@ -112,7 +112,7 @@ space_label.py polar_data.cdf 2017-03-29 2017-03-30
 ```
 Will first load the file `polar_data.cdf`, processed it into `hdf5` file (according to the `polar.json` config file), and then radio observations will be displayed for the time window 26/03/1996 to 27/03/1996:
 
-![Example starting window](docs/source/images/display-measurements_polar.png)
+![Example starting window](https://github.com/CorentinLouis/SPACE_labelling_tool/blob/master/docs/source/images/display-measurements_polar.png?raw=True)
 ## Documentation
 
 Readthedocs documentation is accessible [here](https://space-labelling-tool.readthedocs.io/en/latest).
