@@ -5,8 +5,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='space labelling tool',
-    version='2.0.6',
+    name='SPACE labelling tool',
+    version='2.0',
     description='Interactive python tool designed to label radio emission features of interest in a temporal-spectral map',
     long_description=long_description,
     long_description_content_type="text/markdown",
