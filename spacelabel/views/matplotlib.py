@@ -255,7 +255,7 @@ class ViewMatPlotLib(View):
                 time, freq, values.clip(min=1e-31).T if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else values.T,
                 cmap=color_map if SHOULD_MEASUREMENT_BE_LOG.get(measurement, True) else 'coolwarm',
                 norm=norm,
-                shading='gouraud'
+                shading='auto'
             )
             
 
