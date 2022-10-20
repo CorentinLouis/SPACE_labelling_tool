@@ -158,7 +158,7 @@ class DataSet(ABC):
 
                 for i in trange(len(self._freq)):
                     measurement_new[:, i] = numpy.interp(
-                        time_rescaled.value, time_original.value, measurement_original[:, i]
+                        time_rescaled.value, time_original.value[measurement_original[:,i] > 0], measurement_original[measurement_original[:,i] > 0, i]
                         )
 
                 self._data[name] = measurement_new
@@ -176,7 +176,7 @@ class DataSet(ABC):
 
                 for i in range(0, len(self._freq)):
                     measurement_new = numpy.interp(
-                        time_rescaled.value, self._time_1d, measurement_original
+                        time_rescaled.value, self._time_1d[measurement_original > 0], measurement_original[measurement_original > 0]
                         )
                         
                 self._data_1d[name] = measurement_new
