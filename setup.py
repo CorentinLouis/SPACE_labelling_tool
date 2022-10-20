@@ -6,14 +6,12 @@ with open("README.md", "r") as fh:
 
 setup(
     name='space labelling tool',
-    version='2.0.0',
+    version='2.0.6',
     description='Interactive python tool designed to label radio emission features of interest in a temporal-spectral map',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/CorentinLouis/SPACE_labelling_tool",
-    authors=[
-    "Corentin K. Louis, C. M. Jackman, S. W. Mangham, K. D. Smith, E. P. O'Dwyer, A. Empey, B. Cecconi, A. Boudouma, P. Zarka, S. Maloney"
-    ],
+    author="Corentin K. Louis, C. M. Jackman, S. W. Mangham, K. D. Smith, E. P. O'Dwyer, A. Empey, B. Cecconi, A. Boudouma, P. Zarka, S. Maloney",
     maintainer='Corentin Louis',
     maintainer_email='corentin.louis@dias.ie',
     packages=find_packages(),
