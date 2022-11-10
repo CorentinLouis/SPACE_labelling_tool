@@ -3,6 +3,8 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6886528.svg)](https://doi.org/10.5281/zenodo.6886528)
 [![Documentation Status](https://readthedocs.org/projects/expres/badge/?version=latest)](https://space-labelling-tool.readthedocs.io/en/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://img.shields.io/pypi/dm/Bassa.svg)](https://test.pypi.org/project/space-labelling-tool/)
+[![PyPI downloads](https://img.shields.io/pypi/v/Bassa.svg)](https://test.pypi.org/project/space-labelling-tool/)
 
 The SPectrogram Analysis and Cataloguing Environment (SPACE) tool is an interactive python tool designed to label radio emission features of interest in a temporal-spectral map (called “dynamic spectrum”). The Software uses Matplotlib’s Polygon Selector widget to allow a user to select and edit an undefined number of vertices on top of the dynamic spectrum before closing the shape (polygon). Multiple polygons may be drawn on any spectrum, and the feature name along with the coordinates for each polygon vertex are saved into a “.json” file as per the “Time-Frequency Catalogue” (TFCat) format along with other data such as the feature id, observer name, and data units. This paper describes the first official stable release (version 2.0) of the tool.
 
