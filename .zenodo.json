@@ -71,13 +71,13 @@
             "scheme": "doi",
             "identifier": "10.3389/fspas.2022.1001166",
             "relation": "documents",
-            "resource_type": "publication-article"
+            "resource_type": "publication-article",
         },
         {
           "scheme":"url",
           "identifier":"https://space-labelling-tool.readthedocs.io/",
           "relation":"isDocumentedBy",
-          "resource_type":"softwaredocumentation"
+          "resource_type":"publication-softwaredocumentation"
         }
     ]
 }
