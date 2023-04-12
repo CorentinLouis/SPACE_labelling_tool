@@ -65,19 +65,19 @@
             "scheme": "url",
             "identifier": "https://github.com/CorentinLouis/SPACE_labelling_tool/tree/v2.0.1",
             "relation": "isSupplementedBy",
-            "upload_type": "software"
+            "resource_type": "software"
         },
         {
             "scheme": "doi",
             "identifier": "10.3389/fspas.2022.1001166",
             "relation": "documents",
-            "upload_type": "journal-article"
+            "resource_type": "publication-article"
         },
         {
           "scheme":"url",
           "identifier":"https://space-labelling-tool.readthedocs.io/",
           "relation":"isDocumentedBy",
-          "upload_type":"documentation"
+          "resource_type":"documentation"
         }
     ]
 }
