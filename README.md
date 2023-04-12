@@ -1,6 +1,6 @@
 # SPACE Labelling Tool V2.0.1
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6886528.svg)](https://doi.org/10.5281/zenodo.6886528)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5172258.svg)](https://doi.org/10.5281/zenodo.5172258)
 [![Documentation Status](https://readthedocs.org/projects/expres/badge/?version=latest)](https://space-labelling-tool.readthedocs.io/en/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://img.shields.io/pypi/v/SPACE-labelling-tool?style=plastic)](https://pypi.org/project/SPACE-labelling-tool/)
