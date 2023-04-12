@@ -59,8 +59,6 @@
     "keywords": ["Planetary, Solar and Heliospheric Radio Emissions", "Python Tool", "Labelling Tool", "Solar System", "Sun", "Jupiter", "Earth", "Saturn"],
     
     "description": "The SPectrogram Analysis and Cataloguing Environment (SPACE) tool is an interactive python tool designed to label radio emission features of interest in a time-frequency map (called “dynamic spectrum”). The program uses Matplotlib’s Polygon Selector widget to allow a user to select and edit an undefined number of vertices on top of the dynamic spectrum before closing the shape (polygon). Multiple polygons may be drawn on any spectrum, and the feature name along with the coordinates for each polygon vertex are saved into a “.json” file as per the “Time-Frequency Catalogue” (TFCat) format along with other data such as the feature id, observer name, and data units. This is the first official stable release (version 2.0) of the tool.",
-
-    "Language": "English",
   
   "related_identifiers": [
         {
@@ -77,13 +75,12 @@
         },
         {
           "scheme":"url",
-          "identifier":"space-labelling-tool.readthedocs.io/",
+          "identifier":"https://space-labelling-tool.readthedocs.io/",
           "relation":"isDocumentedBy",
           "upload_type":"documentation"
         }
     ],
     "communities": [
-        {"identifier": "Europlanet-VESPA"},
-        {"identifier": "Space Physics and Aeronomy"}
+        {"identifier": "Europlanet-VESPA"}
     ]
 }
