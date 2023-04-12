@@ -79,8 +79,5 @@
           "relation":"isDocumentedBy",
           "upload_type":"documentation"
         }
-    ],
-    "communities": [
-        {"identifier": "Europlanet-VESPA"}
     ]
 }
