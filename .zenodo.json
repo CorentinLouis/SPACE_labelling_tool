@@ -77,7 +77,7 @@
           "scheme":"url",
           "identifier":"https://space-labelling-tool.readthedocs.io/",
           "relation":"isDocumentedBy",
-          "resource_type":"documentation"
+          "resource_type":"softwaredocumentation"
         }
     ]
 }
