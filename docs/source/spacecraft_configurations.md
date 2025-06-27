@@ -8,7 +8,7 @@ Configurations differ depending on the file type used. The file types, and their
 
 
 ## HDF
-Spacecraft configurations for HDF5 files are declared in the [config/hdf directory](../config/hdf). 
+Spacecraft configurations for HDF5 files are declared in the [config/hdf directory](./config/hdf5). 
 They are JSON-format files with following structure:
 
 ```json
